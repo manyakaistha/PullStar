@@ -31,8 +31,8 @@ jobs:
           with open(os.environ['GITHUB_PATH'], 'a') as paths:
               paths.write(str(binary_dir) + '\n')
           PY
-      - run: uv run pytest -q
       - run: npm --prefix frontend ci
+      - run: uv run pytest -q
       - run: npm --prefix frontend test
       - run: npm --prefix frontend run lint
       - run: npm --prefix frontend run build
