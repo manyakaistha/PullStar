@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "outDir": ".test-build"
+  },
+  "include": ["src/jobAction.ts", "tests/jobAction.test.ts"]
+}

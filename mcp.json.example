@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pullstar": {
+      "command": "/Applications/PullStar.app/Contents/Resources/backend/pullstar-backend",
+      "args": [
+        "--mcp"
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+name: Bug report
+description: Report a reproducible problem in PullStar
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include settings and input format. Do not upload private photos.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: PullStar version and operating system
+    validations:
+      required: true

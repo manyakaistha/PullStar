@@ -1,0 +1,44 @@
+appId: io.github.manyakaistha.pullstar
+productName: PullStar
+copyright: Copyright © 2026 Manya Kaistha
+directories:
+  output: ../release
+files:
+  - dist/**/*
+  - electron/main.cjs
+  - electron/preload.cjs
+  - electron/python.cjs
+  - resources/icons/icon.png
+  - '!node_modules/**/*'
+extraResources:
+  - from: ../build/backend/pullstar-backend
+    to: backend
+  - from: ../LICENSE
+    to: LICENSE
+  - from: ../COPYING
+    to: COPYING
+  - from: ../THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+  - from: ../build/licenses
+    to: licenses
+asar: true
+mac:
+  icon: resources/icons/icon.icns
+  category: public.app-category.photography
+  minimumSystemVersion: '14.0'
+  identity: '-'
+  hardenedRuntime: false
+  target:
+    - target: dmg
+      arch: [arm64]
+artifactName: '${productName}-${version}-macOS-${arch}.${ext}'
+dmg:
+  title: PullStar
+  contents:
+    - x: 130
+      y: 170
+      type: file
+    - x: 410
+      y: 170
+      type: link
+      path: /Applications

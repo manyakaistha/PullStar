@@ -1,0 +1,25 @@
+# Dependencies and generated releases
+.venv/
+node_modules/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+release/
+*.tsbuildinfo
+.test-build/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+# Local photos, caches, and generated outputs
+checkpoints/
+corr_to_jpeg/
+outputs/
+*.pkl
