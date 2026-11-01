@@ -19,6 +19,18 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: uv sync --locked
+      - name: Expose portable FFmpeg for integration tests
+        run: |
+          uv run python - <<'PY'
+          import os
+          from pathlib import Path
+          import imageio_ffmpeg
+          binary_dir = Path(os.environ['RUNNER_TEMP']) / 'pullstar-bin'
+          binary_dir.mkdir(exist_ok=True)
+          (binary_dir / 'ffmpeg').symlink_to(imageio_ffmpeg.get_ffmpeg_exe())
+          with open(os.environ['GITHUB_PATH'], 'a') as paths:
+              paths.write(str(binary_dir) + '\n')
+          PY
       - run: uv run pytest -q
       - run: npm --prefix frontend ci
       - run: npm --prefix frontend test
