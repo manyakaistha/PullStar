@@ -34,7 +34,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.5",
     "cross-env": "^10.1.0",
-    "electron": "^44.4.5",
+    "electron": "^45.1.0",
     "electron-builder": "^26.18.0",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
