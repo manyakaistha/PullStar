@@ -7,8 +7,11 @@ struct PullStarApp: App {
 
     var body: some Scene {
         WindowGroup {
-            StudioShellView(model: model)
+            StudioView(model: model)
                 .preferredColorScheme(.dark)
+                #if DEBUG
+                .task { await SnapshotHarness.runIfRequested(model) }
+                #endif
         }
     }
 }

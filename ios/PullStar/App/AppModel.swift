@@ -36,6 +36,13 @@ public final class AppModel {
     public var isDetecting: Bool = false
     public var detectionError: String? = nil
     public var hardwareSummary: String = "Hardware is detected automatically."
+    public var isTelemetryCollapsed: Bool = true
+    public var hasInputFolder: Bool = false
+    /// Stars matched by "Detect references" (source pixel coordinates of `detectionFrameIndex`).
+    public var detectedStars: [CGPoint] = []
+    public var detectionConfidence: Double? = nil
+    public var detectionNotice: String? = nil
+    private var detectTask: Task<Void, Never>? = nil
 
     // Compatibility aliases with Viewfinder
     public var selectedIndex: Int {
@@ -70,10 +77,9 @@ public final class AppModel {
            let saved = try? JSONDecoder().decode(JobConfig.self, from: data) {
             self.config = saved
         } else {
-            self.config = JobConfig(
-                inputDirectory: defaultOutput,
-                outputDirectory: defaultOutput
-            )
+            var fresh = JobConfig(inputDirectory: defaultOutput, outputDirectory: defaultOutput)
+            fresh.outputBaseName = "aligned_star_trails.tiff"
+            self.config = fresh
         }
 
         self.engine = engine ?? EngineFactory.make()
@@ -83,7 +89,7 @@ public final class AppModel {
         restoreSecurityScopedBookmarks()
 
         // If we restored a valid input folder, trigger an initial scan
-        if FileManager.default.fileExists(atPath: config.inputDirectory.path) {
+        if hasInputFolder && FileManager.default.fileExists(atPath: config.inputDirectory.path) {
             scanDirectory()
         }
     }
@@ -98,7 +104,7 @@ public final class AppModel {
     }
 
     public var hasResult: Bool {
-        (jobState.status == .completed && jobState.resultURL != nil) || jobState.resultURL != nil
+        jobState.status == .completed && jobState.resultURL != nil
     }
 
     public var exportMode: ExportMode {
@@ -107,16 +113,37 @@ public final class AppModel {
             config.noStack = (newValue == .images)
             if newValue == .images {
                 config.saveFrames = true
-                if config.outputBaseName == "aligned_star_trails" || config.outputBaseName.hasSuffix(".tiff") {
-                    config.outputBaseName = "aligned_images"
-                }
+                config.videoEnabled = false
+                config.outputBaseName = "aligned_images"
             } else {
-                if config.outputBaseName == "aligned_images" {
-                    config.outputBaseName = "aligned_star_trails.tiff"
-                }
+                config.outputBaseName = "aligned_star_trails.\(config.imageFormat.rawValue)"
             }
             persistSettings()
         }
+    }
+
+    /// Web: changing the image format rewrites the trail filename's extension.
+    public var imageFormat: ImageFormat {
+        get { config.imageFormat }
+        set {
+            config.imageFormat = newValue
+            if exportMode == .trails {
+                let name = config.outputBaseName
+                let stem = (name as NSString).pathExtension.isEmpty ? name : (name as NSString).deletingPathExtension
+                config.outputBaseName = "\(stem).\(newValue.rawValue)"
+            }
+            persistSettings()
+        }
+    }
+
+    public var videoQuality: VideoQuality {
+        get { config.quality }
+        set { config.quality = newValue; if newValue == .prores { config.videoFormat = .mov }; persistSettings() }
+    }
+
+    public var videoFormat: VideoFormat {
+        get { config.videoFormat == .auto ? .mp4 : config.videoFormat }
+        set { config.videoFormat = newValue; if newValue == .mp4 && config.quality == .prores { config.quality = .high }; persistSettings() }
     }
 
     public var videoPlaybackMode: VideoPlaybackMode {
@@ -156,6 +183,10 @@ public final class AppModel {
         activeSecurityScopedURLs.insert(url)
 
         config.inputDirectory = url
+        hasInputFolder = true
+        config.polaris = nil
+        config.secondStar = nil
+        clearDetection()
         saveBookmark(for: url, key: Self.inputFolderBookmarkKey)
         persistSettings()
 
@@ -201,6 +232,7 @@ public final class AppModel {
                resolved.startAccessingSecurityScopedResource() {
                 activeSecurityScopedURLs.insert(resolved)
                 config.inputDirectory = resolved
+                hasInputFolder = true
             }
         }
 
@@ -244,6 +276,8 @@ public final class AppModel {
                 let items = try await engine.listSequence(in: config.inputDirectory, sortByTime: config.sortByTime)
                 self.sequence = items
                 self.selectedReferenceIndex = 0
+                self.clearDetection()
+                if items.isEmpty { self.scanError = "No supported images were found in this folder." }
 
                 // Detect gaps in timeline
                 var gaps = 0
@@ -266,27 +300,60 @@ public final class AppModel {
         }
     }
 
+    public func clearDetection() {
+        detectedStars = []
+        detectionConfidence = nil
+        detectionNotice = nil
+    }
+
+    /// Mirrors CelestialViewfinder.handleAutoDetect: matched stars are references,
+    /// not an identification of Polaris, so Polaris is cleared.
     public func detectStars() {
-        guard let ref = currentReferenceFrame, !isDetecting else { return }
+        guard let first = sequence.first, !isDetecting, !isProcessing else {
+            if sequence.isEmpty { detectionError = "Load a sequence before detecting stars." }
+            return
+        }
         isDetecting = true
         detectionError = nil
+        clearDetection()
 
-        Task {
+        detectTask = Task {
             do {
-                let result = try await engine.detectStars(in: ref.url, config: config)
+                let result = try await engine.detectStars(in: first.url, config: config)
+                try Task.checkCancellation()
+                self.config.polaris = nil
                 self.jobState.detection = result
-                if self.config.polaris == nil {
-                    self.config.polaris = result.referenceStars.first
+                self.detectedStars = result.referenceStars
+                self.detectionConfidence = result.confidence
+                if let second = result.secondStar { self.config.secondStar = second }
+                if let idx = self.sequence.firstIndex(where: { $0.url == result.referenceImage }) {
+                    self.selectedReferenceIndex = idx
+                } else {
+                    self.selectedReferenceIndex = 0
                 }
-                if self.config.secondStar == nil {
-                    self.config.secondStar = result.secondStar
-                }
-                self.isDetecting = false
+            } catch is CancellationError {
+                self.detectionNotice = "Star detection cancelled."
             } catch {
                 self.detectionError = error.localizedDescription
-                self.isDetecting = false
             }
+            self.isDetecting = false
+            self.detectTask = nil
         }
+    }
+
+    public func cancelDetection() {
+        detectTask?.cancel()
+    }
+
+    /// Changing the order invalidates the loaded sequence (web: setSortByTime).
+    public func setSortByTime(_ value: Bool) {
+        guard value != config.sortByTime else { return }
+        config.sortByTime = value
+        config.polaris = nil
+        config.secondStar = nil
+        clearDetection()
+        persistSettings()
+        if hasInputFolder { scanDirectory() }
     }
 
     public func pickReferenceStars(index: Int) {
@@ -306,6 +373,8 @@ public final class AppModel {
         persistSettings()
         jobState = JobState()
         jobState.status = .running
+        jobState.stage = .preparation
+        activeView = .workspace
         jobState.total = sequence.count
 
         let currentConfig = config
