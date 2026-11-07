@@ -87,6 +87,10 @@ public final class AppModel {
 
         // Restore bookmarks
         restoreSecurityScopedBookmarks()
+        // Container paths change between installs; fall back to Documents if the saved folder is gone.
+        if !FileManager.default.fileExists(atPath: config.outputDirectory.path) {
+            config.outputDirectory = defaultOutput
+        }
 
         // If we restored a valid input folder, trigger an initial scan
         if hasInputFolder && FileManager.default.fileExists(atPath: config.inputDirectory.path) {
@@ -179,8 +183,8 @@ public final class AppModel {
 
     // MARK: - Folder Selection & Security Bookmarks
     public func chooseFolder(_ url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return }
-        activeSecurityScopedURLs.insert(url)
+        // Folders inside the app container are not security-scoped; access them directly.
+        if url.startAccessingSecurityScopedResource() { activeSecurityScopedURLs.insert(url) }
 
         config.inputDirectory = url
         hasInputFolder = true
@@ -194,8 +198,8 @@ public final class AppModel {
     }
 
     public func chooseOutputFolder(_ url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return }
-        activeSecurityScopedURLs.insert(url)
+        // Folders inside the app container are not security-scoped; access them directly.
+        if url.startAccessingSecurityScopedResource() { activeSecurityScopedURLs.insert(url) }
 
         config.outputDirectory = url
         saveBookmark(for: url, key: Self.outputFolderBookmarkKey)
@@ -203,8 +207,8 @@ public final class AppModel {
     }
 
     public func chooseConversionFolder(_ url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return }
-        activeSecurityScopedURLs.insert(url)
+        // Folders inside the app container are not security-scoped; access them directly.
+        if url.startAccessingSecurityScopedResource() { activeSecurityScopedURLs.insert(url) }
 
         config.conversionOutputDirectory = url
         saveBookmark(for: url, key: Self.conversionFolderBookmarkKey)
@@ -228,9 +232,8 @@ public final class AppModel {
         // Input folder
         if let bookmarkData = UserDefaults.standard.data(forKey: Self.inputFolderBookmarkKey) {
             var isStale = false
-            if let resolved = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale),
-               resolved.startAccessingSecurityScopedResource() {
-                activeSecurityScopedURLs.insert(resolved)
+            if let resolved = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale) {
+                if resolved.startAccessingSecurityScopedResource() { activeSecurityScopedURLs.insert(resolved) }
                 config.inputDirectory = resolved
                 hasInputFolder = true
             }
@@ -239,9 +242,8 @@ public final class AppModel {
         // Output folder
         if let bookmarkData = UserDefaults.standard.data(forKey: Self.outputFolderBookmarkKey) {
             var isStale = false
-            if let resolved = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale),
-               resolved.startAccessingSecurityScopedResource() {
-                activeSecurityScopedURLs.insert(resolved)
+            if let resolved = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale) {
+                if resolved.startAccessingSecurityScopedResource() { activeSecurityScopedURLs.insert(resolved) }
                 config.outputDirectory = resolved
             }
         }
@@ -249,9 +251,8 @@ public final class AppModel {
         // Conversion folder
         if let bookmarkData = UserDefaults.standard.data(forKey: Self.conversionFolderBookmarkKey) {
             var isStale = false
-            if let resolved = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale),
-               resolved.startAccessingSecurityScopedResource() {
-                activeSecurityScopedURLs.insert(resolved)
+            if let resolved = try? URL(resolvingBookmarkData: bookmarkData, options: .withoutUI, relativeTo: nil, bookmarkDataIsStale: &isStale) {
+                if resolved.startAccessingSecurityScopedResource() { activeSecurityScopedURLs.insert(resolved) }
                 config.conversionOutputDirectory = resolved
             }
         }

@@ -9,7 +9,7 @@ struct PullStarApp: App {
         WindowGroup {
             StudioView(model: model)
                 .preferredColorScheme(.dark)
-                #if DEBUG
+                #if DEBUG || PULLSTAR_HARNESS
                 .task { await SnapshotHarness.runIfRequested(model) }
                 #endif
         }
