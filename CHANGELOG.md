@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 — 2026-11-07
+
+- Fix the live trail preview showing blue night skies with red and blue swapped (warm/orange). Final images and videos were unaffected.
+
 ## 1.0.0 — 2026-11-01
 
 - First PullStar desktop release, with a dark alignment workspace and the finalized tapered star-trail icon.

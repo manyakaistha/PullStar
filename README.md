@@ -75,7 +75,7 @@ The current desktop release supports **Apple Silicon Macs running macOS 14 or la
 Download `SHA256SUMS.txt` from the same release and compare its DMG entry against:
 
 ```bash
-shasum -a 256 PullStar-1.0.0-macOS-arm64.dmg
+shasum -a 256 PullStar-1.0.1-macOS-arm64.dmg
 ```
 
 The packaged app has been tested on macOS 27.0.1. Intel Macs and other desktop platforms require a source installation; separate installers have not been validated.
