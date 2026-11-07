@@ -1,0 +1,9 @@
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/linebender_resource_handle-b53d093424543d31.d: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/blob.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/font.rs
+
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/liblinebender_resource_handle-b53d093424543d31.rlib: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/blob.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/font.rs
+
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/liblinebender_resource_handle-b53d093424543d31.rmeta: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/blob.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/font.rs
+
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/lib.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/blob.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/linebender_resource_handle-0.1.1/src/font.rs:

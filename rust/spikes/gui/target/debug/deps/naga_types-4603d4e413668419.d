@@ -1,0 +1,9 @@
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/naga_types-4603d4e413668419.d: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/glsl.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/hlsl.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/msl.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/spv.rs
+
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/libnaga_types-4603d4e413668419.rmeta: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/glsl.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/hlsl.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/msl.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/spv.rs
+
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/lib.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/glsl.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/hlsl.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/msl.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-types-30.0.1/src/spv.rs:

@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["egui",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.99.1/core/iter/traits/collect/trait.IntoIterator.html\" title=\"trait core::iter::traits::collect::IntoIterator\">IntoIterator</a> for <a class=\"struct\" href=\"egui/class/struct.Classes.html\" title=\"struct egui::class::Classes\">Classes</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.99.1/core/iter/traits/collect/trait.IntoIterator.html\" title=\"trait core::iter::traits::collect::IntoIterator\">IntoIterator</a> for <a class=\"struct\" href=\"egui/containers/struct.DragPanButtons.html\" title=\"struct egui::containers::DragPanButtons\">DragPanButtons</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.99.1/core/iter/traits/collect/trait.IntoIterator.html\" title=\"trait core::iter::traits::collect::IntoIterator\">IntoIterator</a> for <a class=\"struct\" href=\"egui/struct.Sense.html\" title=\"struct egui::Sense\">Sense</a>",0],["impl&lt;'a&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.99.1/core/iter/traits/collect/trait.IntoIterator.html\" title=\"trait core::iter::traits::collect::IntoIterator\">IntoIterator</a> for &amp;'a <a class=\"struct\" href=\"egui/class/struct.Classes.html\" title=\"struct egui::class::Classes\">Classes</a>",0],["impl&lt;'a&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.99.1/core/iter/traits/collect/trait.IntoIterator.html\" title=\"trait core::iter::traits::collect::IntoIterator\">IntoIterator</a> for <a class=\"struct\" href=\"egui/struct.Atoms.html\" title=\"struct egui::Atoms\">Atoms</a>&lt;'a&gt;",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1591]}

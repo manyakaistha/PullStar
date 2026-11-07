@@ -23,3 +23,9 @@ checkpoints/
 corr_to_jpeg/
 outputs/
 *.pkl
+
+# iOS
+ios/PullStar.xcodeproj/
+ios/PullStarKit/.build/
+ios/**/xcuserdata/
+.swiftpm/

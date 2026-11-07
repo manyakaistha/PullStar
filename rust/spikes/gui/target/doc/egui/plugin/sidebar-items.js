@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["TypedPluginGuard","TypedPluginHandle"],"trait":["Plugin"],"type":["ContextCallback"]};

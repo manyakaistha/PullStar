@@ -1,0 +1,2 @@
+createSrcSidebar('[["pullstar_astro",["",[],["lib.rs"]]],["pullstar_cli",["",[],["lib.rs"]]],["pullstar_desktop",["",[],["lib.rs"]]],["pullstar_domain",["",[],["error.rs","geometry.rs","image.rs","job.rs","lib.rs","units.rs"]]],["pullstar_engine",["",[],["lib.rs"]]],["pullstar_io",["",[],["lib.rs"]]],["pullstar_mcp",["",[],["lib.rs"]]],["pullstar_render",["",[],["lib.rs"]]],["pullstar_service",["",[],["lib.rs"]]],["xtask",["",[],["main.rs"]]]]');
+//{"start":19,"fragment_lengths":[37,36,40,95,39,35,36,39,40,30]}

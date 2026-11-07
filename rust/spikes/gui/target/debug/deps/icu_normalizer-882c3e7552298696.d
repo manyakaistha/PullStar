@@ -1,0 +1,8 @@
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/icu_normalizer-882c3e7552298696.d: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/properties.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/provider.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/uts46.rs
+
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/libicu_normalizer-882c3e7552298696.rmeta: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/properties.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/provider.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/uts46.rs
+
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/lib.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/properties.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/provider.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.4.0/src/uts46.rs:

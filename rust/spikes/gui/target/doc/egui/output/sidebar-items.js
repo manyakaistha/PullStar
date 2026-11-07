@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CursorIcon","OutputCommand","OutputEvent","UserAttentionType"],"fn":["role_description"],"struct":["CustomCursorImage","FullOutput","IMEOutput","LogicOutput","OpenUrl","PlatformOutput","WidgetInfo"]};

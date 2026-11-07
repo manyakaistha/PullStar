@@ -1,0 +1,10 @@
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/polycool-614942debfdfe80c.d: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/cubic.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/poly.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/poly_dyn.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/quadratic.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/yuksel.rs
+
+/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/libpolycool-614942debfdfe80c.rmeta: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/cubic.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/poly.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/poly_dyn.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/quadratic.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/yuksel.rs
+
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/lib.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/cubic.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/poly.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/poly_dyn.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/quadratic.rs:
+/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polycool-0.4.0/src/yuksel.rs:

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Bytes","BytesPoll","ImagePoll","LoadError","SizeHint","TexturePoll"],"fn":["has_extension"],"macro":[["generate_loader_id",1]],"struct":["DefaultBytesLoader","DefaultTextureLoader","Loaders","SizedTexture"],"trait":["BytesLoader","ImageLoader","TextureLoader"],"type":["BytesLoadResult","ImageLoadResult","Result","TextureLoadResult"]};

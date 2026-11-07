@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pullstar.dev/schemas/v1/fixture-manifest.json",
+  "title": "PullStar Deterministic Fixture Manifest Schema",
+  "description": "Schema version 1 for PullStar numerical and behavioral verification fixtures.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generator",
+    "created_at",
+    "sequences",
+    "negative_cases",
+    "schedules",
+    "quality_evaluations"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version matching pullstar-domain INTERCHANGE_SCHEMA_VERSION."
+    },
+    "generator": {
+      "type": "string",
+      "description": "Oracle script identifier that produced this manifest."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sequences": {
+      "type": "object",
+      "description": "Test sequences with frame metadata, detections, matches, and ground truth transforms.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "description",
+          "frames",
+          "detected_sources",
+          "field_alignment",
+          "manual_tracking"
+        ],
+        "properties": {
+          "description": { "type": "string" },
+          "frames": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/FrameMetadata" }
+          },
+          "detected_sources": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/PixelCoord" }
+            }
+          },
+          "field_alignment": {
+            "type": "object",
+            "required": ["transforms", "crop", "skipped_frames"],
+            "properties": {
+              "transforms": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/TransformData" }
+              },
+              "crop": { "$ref": "#/$defs/CropRegion" },
+              "skipped_frames": {
+                "type": "array",
+                "items": { "type": "integer" }
+              }
+            }
+          },
+          "manual_tracking": {
+            "type": "object",
+            "required": ["polaris", "second_star", "transforms", "crop"],
+            "properties": {
+              "polaris": { "$ref": "#/$defs/PixelCoord" },
+              "second_star": {
+                "anyOf": [{ "$ref": "#/$defs/PixelCoord" }, { "type": "null" }]
+              },
+              "transforms": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/TransformData" }
+              },
+              "crop": { "$ref": "#/$defs/CropRegion" }
+            }
+          }
+        }
+      }
+    },
+    "negative_cases": {
+      "type": "object",
+      "description": "Cases where detection or matching must reject or find 0 sources.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description", "frame", "expected_sources_detected", "expected_match_valid"],
+        "properties": {
+          "description": { "type": "string" },
+          "frame": { "$ref": "#/$defs/FrameMetadata" },
+          "expected_sources_detected": { "type": "integer" },
+          "expected_match_valid": { "type": "boolean" },
+          "rejection_reason": { "type": "string" }
+        }
+      }
+    },
+    "schedules": {
+      "type": "object",
+      "description": "Ground truth schedule sampling and step repeats.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["schedule", "slowdowns"],
+        "properties": {
+          "schedule": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["source_index", "step_time", "is_synthetic"],
+              "properties": {
+                "source_index": { "type": "integer" },
+                "step_time": { "type": "number" },
+                "is_synthetic": { "type": "boolean" }
+              }
+            }
+          },
+          "slowdowns": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "quality_evaluations": {
+      "type": "object",
+      "description": "Ground truth stack quality metrics from evaluate_stack_image.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "overall_quality_score",
+          "verdict",
+          "clipping_fraction",
+          "dynamic_range_db",
+          "trail_coverage_fraction",
+          "trail_continuity_score"
+        ],
+        "properties": {
+          "overall_quality_score": { "type": "number" },
+          "verdict": { "type": "string" },
+          "clipping_fraction": { "type": "number" },
+          "dynamic_range_db": { "type": "number" },
+          "trail_coverage_fraction": { "type": "number" },
+          "trail_continuity_score": { "type": "number" },
+          "tuning_suggestions": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "PixelCoord": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "FrameMetadata": {
+      "type": "object",
+      "required": [
+        "index",
+        "name",
+        "relative_path",
+        "size",
+        "encoding",
+        "color",
+        "orientation",
+        "sha256"
+      ],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "name": { "type": "string" },
+        "relative_path": { "type": "string" },
+        "size": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "encoding": {
+          "type": "string",
+          "enum": ["unsigned-8", "unsigned-16", "signed-16", "float-32"]
+        },
+        "color": {
+          "type": "string",
+          "enum": ["gray", "bgr", "bgra"]
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "flip-horizontal",
+            "rotate-180",
+            "flip-vertical",
+            "transpose",
+            "rotate-90",
+            "transverse",
+            "rotate-270"
+          ]
+        },
+        "timestamp_seconds": {
+          "type": ["number", "null"]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "TransformData": {
+      "type": "object",
+      "required": ["frame_index", "dx", "dy", "rotation", "matrix", "is_valid"],
+      "properties": {
+        "frame_index": { "type": "integer" },
+        "dx": { "type": "number" },
+        "dy": { "type": "number" },
+        "rotation": { "type": "number" },
+        "matrix": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 6,
+          "maxItems": 6,
+          "description": "2x3 affine matrix stored row-major [a, b, c, d, e, f]"
+        },
+        "is_valid": { "type": "boolean" }
+      }
+    },
+    "CropRegion": {
+      "type": "object",
+      "required": ["x_start", "x_end", "y_start", "y_end", "width", "height"],
+      "properties": {
+        "x_start": { "type": "integer" },
+        "x_end": { "type": "integer" },
+        "y_start": { "type": "integer" },
+        "y_end": { "type": "integer" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" }
+      }
+    }
+  }
+}

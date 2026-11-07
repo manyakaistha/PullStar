@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CompletionOutput","CompletionPopup","CompletionQuery","Suggestion","TextEdit","TextEditOutput","TextEditState"],"trait":["TextBuffer"]};

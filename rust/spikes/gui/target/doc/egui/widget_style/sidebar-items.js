@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["WidgetState"],"struct":["AtomLayoutStyle","ButtonStyle","CheckboxStyle","SeparatorStyle","StyleArgs","TextEditStyle","TextVisuals"],"trait":["WidgetStyle"]};
