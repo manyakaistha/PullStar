@@ -57,6 +57,22 @@ struct IOTests {
         #expect(sequence.isEmpty)
     }
 
+    @Test func sequenceListerSkipsPreviousResultsAndLivePreviews() throws {
+        let dir = try createTempDirectory()
+        defer { cleanupDirectory(dir) }
+        let frame = makeSyntheticImage(width: 40, height: 30, channels: 3)
+        for i in 0..<4 {
+            try ImageWriter.write(frame, to: dir.appendingPathComponent("IMG_\(i).png"), format: .png)
+        }
+        // A previous run's cropped trail image and its live preview, saved into the source folder.
+        try ImageWriter.write(makeSyntheticImage(width: 36, height: 26, channels: 3),
+                              to: dir.appendingPathComponent("aligned_star_trails.tiff"), format: .tiff)
+        try ImageWriter.write(frame, to: dir.appendingPathComponent("aligned_star_trails.tiff.live.jpg"), format: .jpg)
+
+        let sequence = try SequenceLister.listSequence(in: dir, sortByTime: false)
+        #expect(sequence.map(\.name) == ["IMG_0.png", "IMG_1.png", "IMG_2.png", "IMG_3.png"])
+    }
+
     @Test func sequenceListerEnumerationAndSorting() throws {
         let tempDir = try createTempDirectory()
         defer { cleanupDirectory(tempDir) }

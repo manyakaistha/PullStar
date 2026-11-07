@@ -21,7 +21,9 @@ public final class ImageDecoder: Sendable {
         } else {
             self.ciContext = CIContext(options: [
                 .workingColorSpace: cs,
-                .useSoftwareRenderer: false
+                .useSoftwareRenderer: false,
+                // Frames are rendered once each; caching intermediates only grows memory.
+                .cacheIntermediates: false,
             ])
         }
     }
@@ -263,34 +265,18 @@ public final class ImageDecoder: Sendable {
             )
         }
 
-        var rgb = [Float](repeating: 0, count: width * height * 3)
-        rgba.withUnsafeMutableBytes { rgbaPtr in
-            rgb.withUnsafeMutableBytes { rgbPtr in
-                guard let rgbaBase = rgbaPtr.baseAddress, let rgbBase = rgbPtr.baseAddress else { return }
-                var srcBuf = vImage_Buffer(
-                    data: rgbaBase,
-                    height: vImagePixelCount(height),
-                    width: vImagePixelCount(width),
-                    rowBytes: width * 4 * MemoryLayout<Float>.stride
-                )
-                var dstBuf = vImage_Buffer(
-                    data: rgbBase,
-                    height: vImagePixelCount(height),
-                    width: vImagePixelCount(width),
-                    rowBytes: width * 3 * MemoryLayout<Float>.stride
-                )
-                let err = vImageConvert_RGBAFFFFtoRGBFFF(&srcBuf, &dstBuf, 0)
-                if err != kvImageNoError {
-                    let srcFloats = rgbaPtr.bindMemory(to: Float.self)
-                    let dstFloats = rgbPtr.bindMemory(to: Float.self)
-                    for i in 0..<(width * height) {
-                        dstFloats[i * 3 + 0] = srcFloats[i * 4 + 0]
-                        dstFloats[i * 3 + 1] = srcFloats[i * 4 + 1]
-                        dstFloats[i * 3 + 2] = srcFloats[i * 4 + 2]
-                    }
-                }
+        // Compact RGBA -> RGB in place (destination index never overtakes the source),
+        // avoiding a second full-resolution buffer (~150 MB for a 12 MP frame).
+        let pixelCount = width * height
+        rgba.withUnsafeMutableBufferPointer { buf in
+            guard let p = buf.baseAddress else { return }
+            for i in 0..<pixelCount {
+                let s = i &* 4, d = i &* 3
+                p[d] = p[s]; p[d &+ 1] = p[s &+ 1]; p[d &+ 2] = p[s &+ 2]
             }
         }
+        rgba.removeLast(pixelCount)
+        let rgb = rgba
 
         return PixelImage(width: width, height: height, channels: 3, data: rgb)
     }
@@ -311,27 +297,29 @@ public final class ImageDecoder: Sendable {
             renderImage = ciImage
         }
 
-        var rgba = [Float](repeating: 0, count: width * height * 4)
-        try rgba.withUnsafeMutableBytes { ptr in
-            guard let baseAddress = ptr.baseAddress else {
-                throw IOError.cannotDecodeImage(sourceURL, reason: "Memory allocation failed for RGBA buffer.")
-            }
-            ciContext.render(
-                renderImage,
-                toBitmap: baseAddress,
-                rowBytes: width * 4 * MemoryLayout<Float>.stride,
-                bounds: CGRect(x: 0, y: 0, width: width, height: height),
-                format: .RGBAf,
-                colorSpace: linearColorSpace
-            )
-        }
-
+        // Rec.709 luma computed by Core Image into the red channel, rendered as a single
+        // Float plane: 50 MB for a 12 MP frame instead of a 200 MB RGBA buffer plus a copy.
+        let lumaWeights = CIVector(x: 0.2126, y: 0.7152, z: 0.0722, w: 0)
+        let lumaImage = renderImage.applyingFilter("CIColorMatrix", parameters: [
+            "inputRVector": lumaWeights,
+            "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+            "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+        ])
         var luma = [Float](repeating: 0, count: width * height)
-        for i in 0..<(width * height) {
-            let r = rgba[i * 4 + 0]
-            let g = rgba[i * 4 + 1]
-            let b = rgba[i * 4 + 2]
-            luma[i] = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        try luma.withUnsafeMutableBytes { ptr in
+            guard let baseAddress = ptr.baseAddress else {
+                throw IOError.cannotDecodeImage(sourceURL, reason: "Memory allocation failed for luma buffer.")
+            }
+            // nil colour space: values stay in the linear working space, as before.
+            ciContext.render(
+                lumaImage,
+                toBitmap: baseAddress,
+                rowBytes: width * MemoryLayout<Float>.stride,
+                bounds: CGRect(x: 0, y: 0, width: width, height: height),
+                format: .Rf,
+                colorSpace: nil
+            )
         }
 
         return PixelImage(width: width, height: height, channels: 1, data: luma)

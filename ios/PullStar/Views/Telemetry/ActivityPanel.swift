@@ -160,13 +160,14 @@ struct ActivityPanel: View {
                     for (keyPath, color) in [(\CGPoint.x, PS.driftX), (\CGPoint.y, PS.driftY)] {
                         var path = Path()
                         for (i, p) in points.enumerated() {
-                            let pt = CGPoint(x: CGFloat(i) * step, y: mid - p[keyPath: keyPath] * k)
+                            let pt = CGPoint(x: CGFloat(i) * step, y: min(size.height - 1, max(1, mid - p[keyPath: keyPath] * k)))
                             i == 0 ? path.move(to: pt) : path.addLine(to: pt)
                         }
                         ctx.stroke(path, with: .color(color), lineWidth: 1.5)
                     }
                 }
                 .frame(height: 76)
+                .clipped()
                 .accessibilityLabel("Measured horizontal and vertical star drift")
             }
         }

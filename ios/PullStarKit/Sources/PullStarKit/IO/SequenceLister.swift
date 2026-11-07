@@ -128,6 +128,8 @@ public enum SequenceLister: Sendable {
             sequence.append(info)
         }
 
+        sequence = excludingForeignFrames(sequence)
+
         // Sort sequence
         if sortByTime {
             sequence.sort { a, b in
@@ -145,6 +147,21 @@ public enum SequenceLister: Sendable {
         }
 
         return sequence
+    }
+
+    /// Drops files that cannot belong to the exposure sequence: live-preview JPEGs and any
+    /// image whose pixel size differs from the sequence's dominant size. A previous run's
+    /// trail image or aligned frames saved into the source folder (the desktop app's default)
+    /// are always cropped smaller, and mixing sizes would make the job fail.
+    static func excludingForeignFrames(_ items: [SequenceInfo]) -> [SequenceInfo] {
+        let candidates = items.filter { !$0.name.lowercased().hasSuffix(".live.jpg") }
+        guard candidates.count >= 3 else { return candidates }
+        var counts: [String: Int] = [:]
+        for item in candidates { counts["\(item.width)x\(item.height)", default: 0] += 1 }
+        guard let dominant = counts.max(by: { $0.value < $1.value }), dominant.value > candidates.count / 2 else {
+            return candidates  // no clear majority; let the engine report the mismatch
+        }
+        return candidates.filter { "\($0.width)x\($0.height)" == dominant.key }
     }
 
     /// Asynchronous wrapper for `listSequence`.
