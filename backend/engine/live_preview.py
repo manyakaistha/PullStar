@@ -42,8 +42,10 @@ def write_live_preview(source, path: Path) -> bool:
             )
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_name(f".{path.stem}.tmp{path.suffix}")
-        if not cv2.imwrite(str(temporary), cv2.cvtColor(display, cv2.COLOR_RGB2BGR),
-                           [cv2.IMWRITE_JPEG_QUALITY, 88]):
+        # The accumulator is already in OpenCV BGR order (frames are loaded with
+        # cv2.imread / converted RGB->BGR in modules.io_utils), which is what
+        # cv2.imwrite expects. Converting again would swap red and blue.
+        if not cv2.imwrite(str(temporary), display, [cv2.IMWRITE_JPEG_QUALITY, 88]):
             return False
         temporary.replace(path)
         return True
