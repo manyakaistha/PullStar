@@ -66,6 +66,14 @@ public final class LivePreviewPublisher: @unchecked Sendable {
 
     // MARK: - Tone Mapping and JPEG Rendering
 
+    /// Linear -> sRGB-encoded (0...1) via a 64K-entry table. Python's live preview operates on
+    /// display-encoded pixels, so the percentile stretch must too (backend/engine/live_preview.py).
+    private static let encodeLUT: [Float] = (0..<65536).map { ImageWriter.linearToSRGB(Float($0) / 65535) }
+    @inline(__always) static func encode(_ v: Float) -> Float {
+        guard v > 0 else { return 0 }
+        return encodeLUT.withUnsafeBufferPointer { $0[min(65535, Int(v * 65535))] }
+    }
+
     /// Renders a display-ready tone-mapped JPEG from a linear float accumulator image.
     public static func renderJPEG(from image: PixelImage) -> Data? {
         guard image.width > 0 && image.height > 0 && !image.data.isEmpty else {
@@ -88,7 +96,7 @@ public final class LivePreviewPublisher: @unchecked Sendable {
             for x in stride(from: 0, to: w, by: step) {
                 let idx = (y * w + x) * ch
                 for c in 0..<min(ch, 3) {
-                    let v = image.data[idx + c]
+                    let v = Self.encode(image.data[idx + c])
                     if v.isFinite && v > 0 {
                         positiveSamples.append(v)
                         if v > maxVal { maxVal = v }
@@ -129,14 +137,14 @@ public final class LivePreviewPublisher: @unchecked Sendable {
                 let dstIdx = (dy * outW + dx) * 3
 
                 if ch >= 3 {
-                    let r = min(255.0, max(0.0, image.data[srcIdx] * invScale))
-                    let g = min(255.0, max(0.0, image.data[srcIdx + 1] * invScale))
-                    let b = min(255.0, max(0.0, image.data[srcIdx + 2] * invScale))
+                    let r = min(255.0, max(0.0, Self.encode(image.data[srcIdx]) * invScale))
+                    let g = min(255.0, max(0.0, Self.encode(image.data[srcIdx + 1]) * invScale))
+                    let b = min(255.0, max(0.0, Self.encode(image.data[srcIdx + 2]) * invScale))
                     rgbBytes[dstIdx] = UInt8(r)
                     rgbBytes[dstIdx + 1] = UInt8(g)
                     rgbBytes[dstIdx + 2] = UInt8(b)
                 } else {
-                    let y = min(255.0, max(0.0, image.data[srcIdx] * invScale))
+                    let y = min(255.0, max(0.0, Self.encode(image.data[srcIdx]) * invScale))
                     let byteY = UInt8(y)
                     rgbBytes[dstIdx] = byteY
                     rgbBytes[dstIdx + 1] = byteY

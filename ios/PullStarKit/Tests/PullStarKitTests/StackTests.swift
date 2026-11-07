@@ -307,6 +307,100 @@ struct StackTests {
         #expect(tracks.count == 1)
     }
 
+    @Test func trailVideoWriterHEVC() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let videoOut = tempDir.appendingPathComponent("test_hevc.mp4")
+
+        let writer = try TrailVideoWriter(
+            destinationURL: videoOut,
+            sourceWidth: 64,
+            sourceHeight: 64,
+            fps: 30,
+            quality: .hevc,
+            format: .mp4,
+            resolution: .source
+        )
+
+        #expect(writer.outputURL.pathExtension == "mp4")
+
+        for i in 0..<8 {
+            let frame = Self.createSyntheticFrame(width: 64, height: 64, starX: 10 + i * 4, starY: 32)
+            try writer.writeSnapshot(image: frame, repeats: 1)
+        }
+
+        let finalURL = try await writer.finish()
+        #expect(FileManager.default.fileExists(atPath: finalURL.path))
+
+        let asset = AVURLAsset(url: finalURL)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        #expect(tracks.count == 1)
+        let duration = try await asset.load(.duration)
+        #expect(CMTimeGetSeconds(duration) > 0.0)
+    }
+
+    @Test func trailVideoWriterLossless() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let videoOut = tempDir.appendingPathComponent("test_lossless.mp4")
+
+        let writer = try TrailVideoWriter(
+            destinationURL: videoOut,
+            sourceWidth: 64,
+            sourceHeight: 64,
+            fps: 30,
+            quality: .lossless,
+            format: .mp4,
+            resolution: .source
+        )
+
+        for i in 0..<6 {
+            let frame = Self.createSyntheticFrame(width: 64, height: 64, starX: 12 + i * 4, starY: 32)
+            try writer.writeSnapshot(image: frame, repeats: 1)
+        }
+
+        let finalURL = try await writer.finish()
+        #expect(FileManager.default.fileExists(atPath: finalURL.path))
+
+        let asset = AVURLAsset(url: finalURL)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        #expect(tracks.count == 1)
+    }
+
+    @Test func trailVideoWriterMedium() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let videoOut = tempDir.appendingPathComponent("test_medium.mp4")
+
+        let writer = try TrailVideoWriter(
+            destinationURL: videoOut,
+            sourceWidth: 64,
+            sourceHeight: 64,
+            fps: 30,
+            quality: .medium,
+            format: .mp4,
+            resolution: .source
+        )
+
+        for i in 0..<6 {
+            let frame = Self.createSyntheticFrame(width: 64, height: 64, starX: 12 + i * 4, starY: 32)
+            try writer.writeSnapshot(image: frame, repeats: 1)
+        }
+
+        let finalURL = try await writer.finish()
+        #expect(FileManager.default.fileExists(atPath: finalURL.path))
+
+        let asset = AVURLAsset(url: finalURL)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        #expect(tracks.count == 1)
+    }
+
     // MARK: - StackPipeline End-to-End Tests
 
     @Test func stackPipelineEndToEnd() async throws {

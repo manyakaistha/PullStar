@@ -42,6 +42,25 @@ public final class TrailVideoWriter: @unchecked Sendable {
     private var isSessionStarted = false
     private var isFinished = false
 
+    /// Fast lookup table for linear-to-sRGB mapping (IEC 61966-2-1), matching ImageWriter.
+    private static let sRGBLUT: [UInt8] = {
+        var table = [UInt8](repeating: 0, count: 65536)
+        for i in 0..<65536 {
+            let v = Float(i) / 65535.0
+            let enc = ImageWriter.linearToSRGB(v)
+            table[i] = UInt8(clamping: Int(round(enc * 255.0)))
+        }
+        return table
+    }()
+
+    @inline(__always)
+    private static func mapLinearToSRGBByte(_ val: Float, lut: UnsafePointer<UInt8>) -> UInt8 {
+        if val <= 0.0 { return 0 }
+        if val >= 1.0 { return 255 }
+        let idx = Int(val * 65535.0)
+        return lut[min(65535, max(0, idx))]
+    }
+
     /// Computes target even dimensions fitting the resolution preset.
     public static func fitDimensions(
         width: Int,
@@ -120,6 +139,13 @@ public final class TrailVideoWriter: @unchecked Sendable {
             AVVideoHeightKey: outH
         ]
 
+        // Tag BT.709 colour properties for consistent rendering across platforms
+        outputSettings[AVVideoColorPropertiesKey] = [
+            AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+            AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
+            AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2
+        ]
+
         let numPixels = Double(outW * outH)
 
         switch quality {
@@ -131,37 +157,46 @@ public final class TrailVideoWriter: @unchecked Sendable {
             let bitrate = Int(numPixels * Double(fps) * 0.18)
             outputSettings[AVVideoCompressionPropertiesKey] = [
                 AVVideoAverageBitRateKey: bitrate,
+                AVVideoQualityKey: 0.85,
+                AVVideoProfileLevelKey: "HEVC_Main_AutoLevel",
+                AVVideoMaxKeyFrameIntervalKey: fps,
+                AVVideoAllowFrameReorderingKey: true,
                 AVVideoExpectedSourceFrameRateKey: fps
             ]
 
         case .lossless:
-            // High bitrate HEVC or ProRes for visually lossless master
-            if resolvedFileType == .mov {
-                outputSettings[AVVideoCodecKey] = AVVideoCodecType.proRes422HQ
-            } else {
-                outputSettings[AVVideoCodecKey] = AVVideoCodecType.hevc
-                let bitrate = Int(numPixels * Double(fps) * 0.40)
-                outputSettings[AVVideoCompressionPropertiesKey] = [
-                    AVVideoAverageBitRateKey: bitrate,
-                    AVVideoExpectedSourceFrameRateKey: fps
-                ]
-            }
+            outputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
+            let bitrate = Int(numPixels * Double(fps) * 0.80)
+            outputSettings[AVVideoCompressionPropertiesKey] = [
+                AVVideoAverageBitRateKey: bitrate,
+                AVVideoQualityKey: 1.0,
+                AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
+                AVVideoMaxKeyFrameIntervalKey: fps,
+                AVVideoAllowFrameReorderingKey: true,
+                AVVideoExpectedSourceFrameRateKey: fps
+            ]
 
         case .high:
             outputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
-            let bitrate = Int(numPixels * Double(fps) * 0.15)
+            let bitrate = Int(numPixels * Double(fps) * 0.30)
             outputSettings[AVVideoCompressionPropertiesKey] = [
                 AVVideoAverageBitRateKey: bitrate,
+                AVVideoQualityKey: 0.85,
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
+                AVVideoMaxKeyFrameIntervalKey: fps,
+                AVVideoAllowFrameReorderingKey: true,
                 AVVideoExpectedSourceFrameRateKey: fps
             ]
 
         case .medium:
             outputSettings[AVVideoCodecKey] = AVVideoCodecType.h264
-            let bitrate = Int(numPixels * Double(fps) * 0.08)
+            let bitrate = Int(numPixels * Double(fps) * 0.15)
             outputSettings[AVVideoCompressionPropertiesKey] = [
                 AVVideoAverageBitRateKey: bitrate,
+                AVVideoQualityKey: 0.70,
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264MainAutoLevel,
+                AVVideoMaxKeyFrameIntervalKey: fps,
+                AVVideoAllowFrameReorderingKey: true,
                 AVVideoExpectedSourceFrameRateKey: fps
             ]
         }
@@ -213,11 +248,13 @@ public final class TrailVideoWriter: @unchecked Sendable {
         for _ in 0..<repeatCount {
             var waitLoops = 0
             while !writerInput.isReadyForMoreMediaData {
-                waitLoops += 1
-                if waitLoops > 200 {
-                    Thread.sleep(forTimeInterval: 0.005)
+                if assetWriter.status == .failed || assetWriter.status == .cancelled {
+                    let err = assetWriter.error?.localizedDescription ?? "Asset writer failed or cancelled"
+                    throw VideoWriterError.writerFailed(err)
                 }
-                if waitLoops > 1000 {
+                Thread.sleep(forTimeInterval: 0.002)
+                waitLoops += 1
+                if waitLoops > 2500 {
                     throw VideoWriterError.writerFailed("Timed out waiting for writer ready state")
                 }
             }
@@ -231,7 +268,8 @@ public final class TrailVideoWriter: @unchecked Sendable {
         }
     }
 
-    /// Converts a PixelImage into a 32BGRA CVPixelBuffer sized to `(targetWidth, targetHeight)`.
+    /// Converts a PixelImage into a 32BGRA CVPixelBuffer sized to `(targetWidth, targetHeight)`,
+    /// applying the same sRGB tone/gamma curve as ImageWriter to match the still export.
     private func createPixelBuffer(from image: PixelImage) -> CVPixelBuffer? {
         var pixelBuffer: CVPixelBuffer?
 
@@ -256,6 +294,11 @@ public final class TrailVideoWriter: @unchecked Sendable {
 
         guard let buffer = pixelBuffer else { return nil }
 
+        // Tag color space attachments on CVPixelBuffer
+        CVBufferSetAttachment(buffer, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_709_2, .shouldPropagate)
+        CVBufferSetAttachment(buffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_709_2, .shouldPropagate)
+        CVBufferSetAttachment(buffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, .shouldPropagate)
+
         CVPixelBufferLockBaseAddress(buffer, [])
         defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
 
@@ -268,60 +311,88 @@ public final class TrailVideoWriter: @unchecked Sendable {
 
         let dstPtr = baseAddress.assumingMemoryBound(to: UInt8.self)
 
-        if srcW == targetWidth && srcH == targetHeight {
-            // Direct 1:1 conversion
-            for y in 0..<targetHeight {
-                let rowDst = dstPtr + y * bytesPerRow
-                let rowSrcOffset = y * srcW * ch
-                for x in 0..<targetWidth {
-                    let srcIdx = rowSrcOffset + x * ch
-                    let dstIdx = x * 4
-                    if ch >= 3 {
-                        let r = UInt8(min(255.0, max(0.0, image.data[srcIdx] * 255.0)))
-                        let g = UInt8(min(255.0, max(0.0, image.data[srcIdx + 1] * 255.0)))
-                        let b = UInt8(min(255.0, max(0.0, image.data[srcIdx + 2] * 255.0)))
-                        rowDst[dstIdx] = b
-                        rowDst[dstIdx + 1] = g
-                        rowDst[dstIdx + 2] = r
-                        rowDst[dstIdx + 3] = 255
-                    } else {
-                        let yVal = UInt8(min(255.0, max(0.0, image.data[srcIdx] * 255.0)))
-                        rowDst[dstIdx] = yVal
-                        rowDst[dstIdx + 1] = yVal
-                        rowDst[dstIdx + 2] = yVal
-                        rowDst[dstIdx + 3] = 255
+        // Python video/ffmpeg_writer.write_accumulator_snapshot tone mapping, applied to the
+        // display-encoded (sRGB) accumulator: per-frame min/max stretch, then gamma 0.5 to lift
+        // faint trails. sRGB encoding is monotonic, so the encoded min/max are the encoded
+        // linear min/max; the whole curve is folded into one per-frame LUT over [0, linearMax].
+        var linearMin: Float = 0, linearMax: Float = 0
+        image.data.withUnsafeBufferPointer { buf in
+            guard let base = buf.baseAddress, !buf.isEmpty else { return }
+            vDSP_minv(base, 1, &linearMin, vDSP_Length(buf.count))
+            vDSP_maxv(base, 1, &linearMax, vDSP_Length(buf.count))
+        }
+        let domain = max(linearMax, 1e-6)
+        let invDomain = 1 / domain
+        let encMin = ImageWriter.linearToSRGB(min(max(linearMin, 0), 1))
+        let encMax = ImageWriter.linearToSRGB(min(max(linearMax, 0), 1))
+        let span = encMax - encMin
+        var frameLUT = [UInt8](repeating: 0, count: 65536)
+        if span > 0 {
+            for i in 0..<65536 {
+                let linear = Float(i) / 65535 * domain
+                let n = min(1, max(0, (ImageWriter.linearToSRGB(min(linear, 1)) - encMin) / span))
+                frameLUT[i] = UInt8(clamping: Int((powf(n, 0.5) * 255).rounded()))
+            }
+        }
+
+        frameLUT.withUnsafeBufferPointer { lutBuffer in
+            guard let lut = lutBuffer.baseAddress else { return }
+
+            if srcW == targetWidth && srcH == targetHeight {
+                // Direct 1:1 conversion with sRGB tone curve
+                for y in 0..<targetHeight {
+                    let rowDst = dstPtr + y * bytesPerRow
+                    let rowSrcOffset = y * srcW * ch
+                    for x in 0..<targetWidth {
+                        let srcIdx = rowSrcOffset + x * ch
+                        let dstIdx = x * 4
+                        if ch >= 3 {
+                            let r = Self.mapLinearToSRGBByte(image.data[srcIdx] * invDomain, lut: lut)
+                            let g = Self.mapLinearToSRGBByte(image.data[srcIdx + 1] * invDomain, lut: lut)
+                            let b = Self.mapLinearToSRGBByte(image.data[srcIdx + 2] * invDomain, lut: lut)
+                            rowDst[dstIdx] = b
+                            rowDst[dstIdx + 1] = g
+                            rowDst[dstIdx + 2] = r
+                            rowDst[dstIdx + 3] = 255
+                        } else {
+                            let yVal = Self.mapLinearToSRGBByte(image.data[srcIdx] * invDomain, lut: lut)
+                            rowDst[dstIdx] = yVal
+                            rowDst[dstIdx + 1] = yVal
+                            rowDst[dstIdx + 2] = yVal
+                            rowDst[dstIdx + 3] = 255
+                        }
                     }
                 }
-            }
-        } else {
-            // Bilinear sampling to fit target dimensions
-            let scaleX = Double(srcW) / Double(targetWidth)
-            let scaleY = Double(srcH) / Double(targetHeight)
+            } else {
+                // Bilinear / subsampling to fit target dimensions with sRGB tone curve
+                let scaleX = Double(srcW) / Double(targetWidth)
+                let scaleY = Double(srcH) / Double(targetHeight)
 
-            for dy in 0..<targetHeight {
-                let sy = min(srcH - 1, Int(Double(dy) * scaleY))
-                let rowDst = dstPtr + dy * bytesPerRow
-                let rowSrcOffset = sy * srcW * ch
+                for dy in 0..<targetHeight {
+                    let sy = min(srcH - 1, Int(Double(dy) * scaleY))
+                    let rowDst = dstPtr + dy * bytesPerRow
+                    let rowSrcOffset = sy * srcW * ch
 
-                for dx in 0..<targetWidth {
-                    let sx = min(srcW - 1, Int(Double(dx) * scaleX))
-                    let srcIdx = rowSrcOffset + sx * ch
-                    let dstIdx = dx * 4
+                    for dx in 0..<targetWidth {
+                        let sx = min(srcW - 1, Int(Double(dx) * scaleX))
+                        let srcIdx = rowSrcOffset + sx * ch
+                        let dstIdx = dx * 4
 
-                    if ch >= 3 {
-                        let r = UInt8(min(255.0, max(0.0, image.data[srcIdx] * 255.0)))
-                        let g = UInt8(min(255.0, max(0.0, image.data[srcIdx + 1] * 255.0)))
-                        let b = UInt8(min(255.0, max(0.0, image.data[srcIdx + 2] * 255.0)))
-                        rowDst[dstIdx] = b
-                        rowDst[dstIdx + 1] = g
-                        rowDst[dstIdx + 2] = r
-                        rowDst[dstIdx + 3] = 255
-                    } else {
-                        let yVal = UInt8(min(255.0, max(0.0, image.data[srcIdx] * 255.0)))
-                        rowDst[dstIdx] = yVal
-                        rowDst[dstIdx + 1] = yVal
-                        rowDst[dstIdx + 2] = yVal
-                        rowDst[dstIdx + 3] = 255
+                        if ch >= 3 {
+                            let r = Self.mapLinearToSRGBByte(image.data[srcIdx] * invDomain, lut: lut)
+                            let g = Self.mapLinearToSRGBByte(image.data[srcIdx + 1] * invDomain, lut: lut)
+                            let b = Self.mapLinearToSRGBByte(image.data[srcIdx + 2] * invDomain, lut: lut)
+                            rowDst[dstIdx] = b
+                            rowDst[dstIdx + 1] = g
+                            rowDst[dstIdx + 2] = r
+                            rowDst[dstIdx + 3] = 255
+                        } else {
+                            let yVal = Self.mapLinearToSRGBByte(image.data[srcIdx] * invDomain, lut: lut)
+                            rowDst[dstIdx] = yVal
+                            rowDst[dstIdx + 1] = yVal
+                            rowDst[dstIdx + 2] = yVal
+                            rowDst[dstIdx + 3] = 255
+                        }
                     }
                 }
             }
@@ -366,4 +437,8 @@ public final class TrailVideoWriter: @unchecked Sendable {
         assetWriter.cancelWriting()
         _ = try? FileManager.default.removeItem(at: outputURL)
     }
+}
+
+extension KalmanSmoother {
+    public var stateEstimate: CGPoint { currentPosition() }
 }

@@ -188,7 +188,9 @@ public enum StackPipeline {
                 // Synthetic ghost frames between frame i and frame i + 1
                 if config.extensionFactor > 1.0 && i < frameCount - 1 && rotationAngles.count > i + 1 {
                     let angleDelta = rotationAngles[i + 1] - rotationAngles[i]
-                    let numGhosts = max(1, Int(Double(config.ghostFramesPerReal) * (config.extensionFactor - 1.0)))
+                    let numGhosts = (config.ghostFramesPerReal >= 1 && abs(angleDelta) >= 0.001)
+                        ? max(1, Int(Double(config.ghostFramesPerReal) * (config.extensionFactor - 1.0)))
+                        : 0
 
                     let selectedVideoGhosts = Set(TrailEffects.evenlySpaced(
                         Array(0..<numGhosts),

@@ -5,19 +5,44 @@ import CoreGraphics
 ///
 /// Dispatches to automatic star field matching or manual Polaris/second-star tracking,
 /// handles bounded-worker concurrent frame loading and detection, fits the sky-rotation-preserving
-/// field trajectory, applies Kalman smoothing, and computes the common valid crop region.
+/// field trajectory, and computes the common valid crop region.
 public final class AlignmentAnalyzer: Sendable {
     public init() {}
 
+    /// Sequence times normalized by median exposure interval, matching Python sequence_times.
+    public static func sequenceTimes(from times: [Double], frameCount: Int) -> [Double] {
+        guard times.count == frameCount, frameCount > 1 else {
+            return (0..<frameCount).map { Double($0) }
+        }
+        for i in 0..<frameCount {
+            guard times[i] >= 0 else {
+                return (0..<frameCount).map { Double($0) }
+            }
+        }
+        var intervals: [Double] = []
+        intervals.reserveCapacity(frameCount - 1)
+        for i in 1..<frameCount {
+            let dt = times[i] - times[i - 1]
+            guard dt > 0 else {
+                return (0..<frameCount).map { Double($0) }
+            }
+            intervals.append(dt)
+        }
+        let sortedIntervals = intervals.sorted()
+        let median = sortedIntervals[sortedIntervals.count / 2]
+        guard median >= 1.0 else {
+            return (0..<frameCount).map { Double($0) }
+        }
+        var result = [0.0]
+        var cumsum = 0.0
+        for dt in intervals {
+            cumsum += dt
+            result.append(cumsum / median)
+        }
+        return result
+    }
+
     /// Analyze a sequence of exposures to calculate per-frame alignment transforms and crop region.
-    ///
-    /// - Parameters:
-    ///   - frameCount: Total number of frames in the sequence.
-    ///   - loadLuma: Asynchronous closure loading a frame as `PixelImage`.
-    ///   - times: Elapsed time in seconds for each frame (since first frame).
-    ///   - config: Job configuration with tracking, noise, and worker options.
-    ///   - progress: Progress reporting callback (currentFrame, totalFrames, driftX, driftY).
-    /// - Returns: Tuple of calculated FrameTransforms, common CropRegion, reference stars, and confidence.
     public func analyze(
         frameCount: Int,
         loadLuma: @escaping @Sendable (Int) async throws -> PixelImage,
@@ -178,12 +203,16 @@ public final class AlignmentAnalyzer: Sendable {
                 if let m = match {
                     matrix = m.matrix
                     conf = m.confidence
+                    print("SWIFT \(index): MATCHED REF inliers=\(m.sourceInliers.count) rms=\(m.rmsError) tx=\(m.matrix[2]) ty=\(m.matrix[5]) rot=\(atan2(m.matrix[3], m.matrix[0]) * 180.0 / .pi)")
                 } else if let prev = previousField {
                     // Fallback to previous frame if scene moved beyond original field
                     match = StarFieldMatcher.match(source: prev, target: points)
                     if let m = match {
                         matrix = FieldAnalysisModel.multiply3x3(m.matrix, previousMatrix)
                         conf = m.confidence
+                        print("SWIFT \(index): MATCHED PREV inliers=\(m.sourceInliers.count) rms=\(m.rmsError) prev_tx=\(m.matrix[2]) prev_ty=\(m.matrix[5]) res_tx=\(matrix![2]) res_ty=\(matrix![5]) rot=\(atan2(matrix![3], matrix![0]) * 180.0 / .pi)")
+                    } else {
+                        print("SWIFT \(index): FAILED")
                     }
                 }
             }
@@ -196,12 +225,8 @@ public final class AlignmentAnalyzer: Sendable {
             if valid, let mat = matrix {
                 previousField = points
                 previousMatrix = mat
-                let driftX = mat[2]
-                let driftY = mat[5]
-                progress(index + 1, frameCount, driftX, driftY)
-            } else {
-                progress(index + 1, frameCount, 0.0, 0.0)
             }
+            progress(index + 1, frameCount, 0.0, 0.0)
         }
 
         let validIndices = (0..<frameCount).filter { isValid[$0] }
@@ -213,9 +238,7 @@ public final class AlignmentAnalyzer: Sendable {
         try Task.checkCancellation()
 
         // 3. Robust Sky-Rotation-Preserving Trajectory Fitting
-        let normTimes: [Double] = (0..<frameCount).map { i in
-            (times.indices.contains(i) && times[i] >= 0) ? times[i] : Double(i)
-        }
+        let normTimes = Self.sequenceTimes(from: times, frameCount: frameCount)
         let span = max(normTimes.last ?? 1.0, 1.0)
         let tValid = validIndices.map { normTimes[$0] / span }
 
@@ -273,28 +296,15 @@ public final class AlignmentAnalyzer: Sendable {
             transforms.append(transform)
         }
 
-        // 5. Optional Kalman smoothing on residual translation track
-        if config.useKalman {
-            let validPoints = transforms.filter { !$0.skipped }.map { CGPoint(x: $0.tx, y: $0.ty) }
-            if validPoints.count > 1 {
-                let smoothed = KalmanSmoother.smooth(
-                    points: validPoints,
-                    processNoise: config.kalmanProcessNoise,
-                    measurementNoise: config.kalmanMeasurementNoise
-                )
-                var sIdx = 0
-                for i in 0..<transforms.count where !transforms[i].skipped {
-                    transforms[i].tx = Double(smoothed[sIdx].x)
-                    transforms[i].ty = Double(smoothed[sIdx].y)
-                    sIdx += 1
-                }
-            }
+        // Report tracking precision drift residuals matching alignment_engine.py track_cb
+        for transform in transforms where !transform.skipped {
+            progress(frameCount, frameCount, transform.tx, transform.ty)
         }
 
-        // 6. Common crop calculation
+        // 5. Common crop calculation
         let crop = try CropCalculator.calculateCrop(transforms: transforms, width: imageWidth, height: imageHeight)
 
-        // 7. Overall confidence
+        // 6. Overall confidence
         let totalConf = validIndices.reduce(0.0) { $0 + confidences[$1] }
         let avgConf = totalConf / Double(validIndices.count)
 
@@ -378,101 +388,82 @@ public final class AlignmentAnalyzer: Sendable {
             frameTransform.time = t
 
             if let trackedP = polResult.point {
-                if useKalman, let pk = polarisKalman {
-                    let innov = pk.innovation(for: trackedP)
-                    if innov > 15.0 {
-                        // Outlier
-                        currentPolaris = pk.currentPosition()
-                    } else {
-                        currentPolaris = pk.update(with: trackedP)
-                    }
-                } else {
-                    currentPolaris = trackedP
-                }
-                prevPolaris = currentPolaris
                 totalConfidence += polResult.confidence
+                polarisKalman?.update(with: trackedP)
+                let finalPolaris = (useKalman && polarisKalman != nil) ? (polarisKalman?.currentPosition() ?? trackedP) : trackedP
+                prevPolaris = currentPolaris
+                currentPolaris = finalPolaris
 
-                // Track second star if rotation correction is enabled
-                if useRotation, let s2 = initialSecondStar {
-                    let searchS2: CGPoint
+                var currentAngle = 0.0
+                if useRotation, let s2 = currentSecondStar {
+                    let searchSecond: CGPoint
                     if useKalman && i > 0, let sk = secondKalman {
-                        searchS2 = sk.predict()
+                        searchSecond = sk.predict()
                     } else {
-                        searchS2 = currentSecondStar ?? s2
+                        searchSecond = s2
                     }
 
-                    let s2Result = detector.trackStarInROI(
+                    let secResult = detector.trackStarInROI(
                         image: img,
-                        center: searchS2,
+                        center: searchSecond,
                         previousPosition: prevSecondStar
                     )
 
-                    if let trackedS2 = s2Result.point {
-                        if useKalman, let sk = secondKalman {
-                            let innov = sk.innovation(for: trackedS2)
-                            if innov > 15.0 {
-                                currentSecondStar = sk.currentPosition()
-                            } else {
-                                currentSecondStar = sk.update(with: trackedS2)
-                            }
-                        } else {
-                            currentSecondStar = trackedS2
-                        }
+                    if let trackedS2 = secResult.point {
+                        secondKalman?.update(with: trackedS2)
+                        let finalS2 = (useKalman && secondKalman != nil) ? (secondKalman?.currentPosition() ?? trackedS2) : trackedS2
                         prevSecondStar = currentSecondStar
+                        currentSecondStar = finalS2
 
-                        // Rotation + translation affine matrix
-                        let refVectorX = Double(s2.x - initialPolaris.x)
-                        let refVectorY = Double(s2.y - initialPolaris.y)
-                        let currVectorX = Double(currentSecondStar!.x - currentPolaris.x)
-                        let currVectorY = Double(currentSecondStar!.y - currentPolaris.y)
+                        // Calculate rotation relative to initial line
+                        let dInitX = Double(initialSecondStar!.x - initialPolaris.x)
+                        let dInitY = Double(initialSecondStar!.y - initialPolaris.y)
+                        let initAngle = atan2(dInitY, dInitX)
 
-                        let refAngle = atan2(refVectorY, refVectorX)
-                        let currAngle = atan2(currVectorY, currVectorX)
-                        let rot = refAngle - currAngle
+                        let dCurrX = Double(finalS2.x - finalPolaris.x)
+                        let dCurrY = Double(finalS2.y - finalPolaris.y)
+                        let currAngle = atan2(dCurrY, dCurrX)
 
-                        let cosR = cos(rot)
-                        let sinR = sin(rot)
-                        let dx = Double(initialPolaris.x) - (cosR * Double(currentPolaris.x) - sinR * Double(currentPolaris.y))
-                        let dy = Double(initialPolaris.y) - (sinR * Double(currentPolaris.x) + cosR * Double(currentPolaris.y))
-
-                        frameTransform.a = cosR
-                        frameTransform.b = -sinR
-                        frameTransform.tx = dx
-                        frameTransform.c = sinR
-                        frameTransform.d = cosR
-                        frameTransform.ty = dy
-                        frameTransform.skipped = false
-                    } else {
-                        // Fallback to translation-only
-                        let dx = Double(initialPolaris.x - currentPolaris.x)
-                        let dy = Double(initialPolaris.y - currentPolaris.y)
-                        frameTransform.a = 1.0; frameTransform.b = 0.0; frameTransform.tx = dx
-                        frameTransform.c = 0.0; frameTransform.d = 1.0; frameTransform.ty = dy
-                        frameTransform.skipped = false
+                        currentAngle = currAngle - initAngle
                     }
-                } else {
-                    // Translation-only mode
-                    let dx = Double(initialPolaris.x - currentPolaris.x)
-                    let dy = Double(initialPolaris.y - currentPolaris.y)
-                    frameTransform.a = 1.0; frameTransform.b = 0.0; frameTransform.tx = dx
-                    frameTransform.c = 0.0; frameTransform.d = 1.0; frameTransform.ty = dy
-                    frameTransform.skipped = false
                 }
+
+                // Reference coordinates are from frame 0
+                let dx = Double(initialPolaris.x - currentPolaris.x)
+                let dy = Double(initialPolaris.y - currentPolaris.y)
+
+                if abs(currentAngle) > 1e-6 {
+                    let cosA = cos(currentAngle)
+                    let sinA = sin(currentAngle)
+                    frameTransform.a = cosA
+                    frameTransform.b = -sinA
+                    frameTransform.tx = Double(initialPolaris.x) - (cosA * Double(currentPolaris.x) - sinA * Double(currentPolaris.y))
+                    frameTransform.c = sinA
+                    frameTransform.d = cosA
+                    frameTransform.ty = Double(initialPolaris.y) - (sinA * Double(currentPolaris.x) + cosA * Double(currentPolaris.y))
+                } else {
+                    frameTransform.a = 1.0
+                    frameTransform.b = 0.0
+                    frameTransform.tx = dx
+                    frameTransform.c = 0.0
+                    frameTransform.d = 1.0
+                    frameTransform.ty = dy
+                }
+                frameTransform.skipped = false
+
+                progress(i + 1, frameCount, dx, dy)
             } else {
                 frameTransform.skipped = true
+                progress(i + 1, frameCount, 0.0, 0.0)
             }
 
             transforms.append(frameTransform)
-            progress(i + 1, frameCount, frameTransform.tx, frameTransform.ty)
         }
 
         let crop = try CropCalculator.calculateCrop(transforms: transforms, width: imgWidth, height: imgHeight)
-        let avgConf = totalConfidence / Double(max(1, frameCount))
-
-        var refStars = [initialPolaris]
-        if let s2 = initialSecondStar {
-            refStars.append(s2)
-        }
+        let validCount = transforms.filter { !$0.skipped }.count
+        let avgConf = validCount > 0 ? totalConfidence / Double(validCount) : 0.0
+        let refStars = [initialPolaris] + (initialSecondStar != nil ? [initialSecondStar!] : [])
 
         return (transforms, crop, refStars, avgConf)
     }

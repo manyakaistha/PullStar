@@ -85,8 +85,9 @@ enum SnapshotHarness {
                 try? await Task.sleep(for: .milliseconds(20))
             }
         case "results":
-            let out = FileManager.default.temporaryDirectory.appendingPathComponent("aligned_star_trails.jpg")
-            if let first = model.sequence.first, let data = try? await model.loadPreview(for: first.url, maxDimension: 2048) {
+            var out = FileManager.default.temporaryDirectory.appendingPathComponent("aligned_star_trails.jpg")
+            if let custom = env["PULLSTAR_SNAPSHOT_RESULT"], !custom.isEmpty { out = URL(fileURLWithPath: custom) }
+            else if let first = model.sequence.first, let data = try? await model.loadPreview(for: first.url, maxDimension: 2048) {
                 try? data.write(to: out)
             }
             var s = JobState()

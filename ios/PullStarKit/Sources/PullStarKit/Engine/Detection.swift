@@ -173,7 +173,7 @@ public final class StarDetector: Sendable {
 
         // Interpolate background and rms to full working resolution and whiten noise:
         // normalized = (working - bkg) / max(rms, noiseFloor)
-        var sortedRms = smoothRms.sorted()
+        let sortedRms = smoothRms.sorted()
         let p10Rms = sortedRms[max(0, Int(Double(sortedRms.count) * 0.1))]
         let noiseFloor = max(p10Rms * 0.3, 1e-6)
 
@@ -437,7 +437,7 @@ public final class StarDetector: Sendable {
         let blurred = gaussianBlur3x3(roi, width: roiW, height: roiH)
 
         // Threshold percentile
-        var sortedVals = blurred.sorted()
+        let sortedVals = blurred.sorted()
         let pIdx = max(0, min(sortedVals.count - 1, Int(Double(sortedVals.count) * (thresholdPercentile / 100.0))))
         let thresh = sortedVals[pIdx]
 

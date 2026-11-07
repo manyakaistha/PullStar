@@ -47,36 +47,63 @@ struct ResultsStage: View {
         }
     }
 
+    /// Rect the result occupies when fitted into `box` (both images are drawn into this same
+    /// rect so the original and the aligned stack stay registered under the divider).
+    private func imageRect(in box: CGSize) -> CGRect {
+        guard let size = (result ?? original)?.size, size.width > 0, size.height > 0, box.width > 0, box.height > 0 else {
+            return CGRect(origin: .zero, size: box)
+        }
+        let scale = min(box.width / size.width, box.height / size.height)
+        let w = size.width * scale, h = size.height * scale
+        return CGRect(x: (box.width - w) / 2, y: (box.height - h) / 2, width: w, height: h)
+    }
+
     private var comparison: some View {
         GeometryReader { geo in
-            ZStack {
+            let rect = imageRect(in: geo.size)
+            let dividerX = rect.minX + rect.width * split
+            ZStack(alignment: .topLeading) {
                 PS.workspace
-                if let result { Image(uiImage: result).resizable().aspectRatio(contentMode: .fit) }
+                if let result {
+                    Image(uiImage: result).resizable().interpolation(.high)
+                        .frame(width: rect.width, height: rect.height)
+                        .offset(x: rect.minX, y: rect.minY)
+                }
                 if let original {
-                    Image(uiImage: original).resizable().aspectRatio(contentMode: .fit)
-                        .mask(alignment: .leading) { Rectangle().frame(width: geo.size.width * split) }
-                    Rectangle().fill(Color(hex: 0xeeeeee)).frame(width: 1)
-                        .position(x: geo.size.width * split, y: geo.size.height / 2)
-                        .frame(height: geo.size.height)
+                    // Mask in the image rect's own coordinates: everything left of the divider shows the original.
+                    Image(uiImage: original).resizable().interpolation(.high)
+                        .frame(width: rect.width, height: rect.height)
+                        .mask(alignment: .leading) {
+                            Rectangle().frame(width: max(0, rect.width * split), height: rect.height)
+                        }
+                        .offset(x: rect.minX, y: rect.minY)
+                    Rectangle().fill(Color(hex: 0xeeeeee)).frame(width: 1, height: rect.height)
+                        .offset(x: dividerX - 0.5, y: rect.minY)
                     Capsule()
                         .fill(LinearGradient(colors: [Color(hex: 0xa5a5aa), Color(hex: 0xf1f1f3), Color(hex: 0xa5a5aa)], startPoint: .leading, endPoint: .trailing))
                         .overlay(Capsule().strokeBorder(Color.white.opacity(0.56)))
                         .frame(width: 11, height: 46)
                         .shadow(color: .black.opacity(0.6), radius: 6, y: 2)
-                        .position(x: min(max(geo.size.width * split, 22), geo.size.width - 22), y: geo.size.height / 2)
-                    tag("Original").frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(14)
+                        .offset(x: dividerX - 5.5, y: rect.midY - 23)
+                        .accessibilityHidden(true)
+                    tag("Original").offset(x: rect.minX + 14, y: rect.minY + 14)
                 }
-                tag(noStack ? "Aligned image" : "Aligned stack").frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(14)
+                tag(noStack ? "Aligned image" : "Aligned stack")
+                    .frame(width: rect.width - 28, alignment: .trailing)
+                    .offset(x: rect.minX + 14, y: rect.minY + 14)
                 if imageError {
                     Text("Preview unavailable. Export the original output below.").font(PS.note).foregroundStyle(PS.danger)
                         .padding(10).background(RoundedRectangle(cornerRadius: 8).fill(.black.opacity(0.8)))
-                        .frame(maxHeight: .infinity, alignment: .bottom).padding(20)
+                        .frame(width: geo.size.width, height: geo.size.height - 20, alignment: .bottom)
                 }
             }
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
-                guard original != nil else { return }
-                split = min(1, max(0, value.location.x / max(1, geo.size.width)))
+            // Tap anywhere to move the divider; horizontal drags scrub it, vertical drags still scroll the page.
+            .onTapGesture { location in moveDivider(to: location.x, in: rect) }
+            .simultaneousGesture(DragGesture(minimumDistance: 6).onChanged { value in
+                guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                moveDivider(to: value.location.x, in: rect)
             })
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Image comparison")
@@ -88,6 +115,11 @@ struct ResultsStage: View {
         .frame(minHeight: 320)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.white.opacity(0.08)))
+    }
+
+    private func moveDivider(to x: CGFloat, in rect: CGRect) {
+        guard original != nil, rect.width > 0 else { return }
+        split = min(1, max(0, (x - rect.minX) / rect.width))
     }
 
     private func tag(_ text: String) -> some View {

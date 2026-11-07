@@ -1,5 +1,66 @@
 # iOS Engineering Notes
 
+## Implementation Sub-agent (Pass 1 Detection, Alignment, Kalman, Crop)
+
+### Owned Files & Responsibilities
+- `Sources/PullStarKit/Engine/Detection.swift`: `StarDetector`, `DetectedStar`
+- `Sources/PullStarKit/Engine/AlignmentMatching.swift`: `StarFieldMatcher`, `StarMatch`
+- `Sources/PullStarKit/Engine/AlignmentModel.swift`: `FieldAnalysisModel`
+- `Sources/PullStarKit/Engine/AlignmentAnalyzer.swift`: `AlignmentAnalyzer`, `AlignmentError`
+- `Sources/PullStarKit/Engine/KalmanSmoother.swift`: `KalmanSmoother`
+- `Sources/PullStarKit/Engine/CropCalculator.swift`: `CropCalculator`
+- `Tests/PullStarKitTests/AlignmentTests.swift`: Comprehensive unit tests for detection, matching, trajectory model, Kalman filter/smoother, common crop, and end-to-end `analyze(...)` pipeline.
+
+### Architectural Details & Faithfulness to Reference
+1. **StarDetector** (`Detection.swift`):
+   - Accelerate/vDSP background estimation & subtraction:
+     - Multi-channel luma conversion (`0.299*R + 0.587*G + 0.114*B`).
+     - Bounded analysis downscaling (max dimension 2048) preserving original coordinate mapping.
+     - Subsampled percentile linear stretch using `vDSP_vsadd` and `vDSP_vsmul`.
+     - 2D grid background estimation with MAD noise floor whitening (`(working - bkg) / max(noise, noiseFloor)`).
+     - 3x3 binomial/Gaussian smoothing on whitened image.
+   - Multiscale local-peak detection with strict 8-connected local maxima check.
+   - Hot-pixel and cosmic ray spike rejection: tests core flux concentration against maximum core ratio (`<= 0.65` in standard, `<= 0.75` in noisy RAW recovery).
+   - Diffuse structure rejection: requires core sum `>= 0.20` of total patch flux.
+   - Intensity-weighted moment centroiding on 7x7 patch yielding sub-pixel accuracy (`< 0.1` px).
+   - Spatial quota dispersion over an 8x6 grid with minimum 4-pixel separation to prevent control point clustering.
+   - Supports 'noisy RAW recovery' mode with relaxed SNR and elongated streak PSF acceptance.
+   - High-precision ROI star tracker for manual Polaris & second star tracking.
+
+2. **StarFieldMatcher & Asterism Matching** (`AlignmentMatching.swift`):
+   - Fast invariant triangle (asterism) pattern matching based on normalized side ratios `(r1, r2)` sorted for fast binary search.
+   - Scale consistency check (`0.97 <= scale <= 1.03`).
+   - Consensus inlier voting across star candidates.
+   - Two iterations of unit-scale 2D rigid least-squares fit (`atan2(Sxy - Syx, Sxx + Syy)` closed-form optimal rotation).
+   - Strict correspondence validation: minimum 6 matches, consensus threshold `max(6, min(20, ceil(0.3 * pool)))`, RMS error `<= 1.5`, and spatial spread `>= 20.0`.\n   - Multi-tier candidate budget matching (100, 60, 40) for noisy exposures.
+
+3. **Sky-Rotation-Preserving Trajectory Model** (`AlignmentModel.swift`):
+   - Faithful port of `field_alignment.py`.
+   - Continuous angle unwrapping across observations.
+   - Robust IRLS (Iteratively Reweighted Least Squares) with soft-L1 loss (`noise = 0.002` for angle, `noise = 2.0` for translation) matching SciPy.
+   - Linear or normalized circular translation basis `[1, sin(w*t)/w, (1 - cos(w*t))/w^2]`.
+   - Computes smooth sky motion at each timestamp and framewise wobble correction matrix `M_smooth(t) @ inv(M_observed)`.
+   - Corrects camera vibration while preserving continuous star trail arcs.
+
+4. **KalmanSmoother** (`KalmanSmoother.swift`):
+   - 4-state constant velocity model `[x, y, vx, vy]`.
+   - Joseph-form covariance updates for numerical stability.
+   - Mahalanobis distance outlier detection (`d^2 > 15.0`).
+   - Zero-phase bidirectional smoothing for residual wobble tracks.
+
+5. **CropCalculator** (`CropCalculator.swift`):
+   - Ports `field_crop` from `backend/engine/field_alignment.py`.
+   - Bounding displacement of all 4 image corners under each frame's affine transform.
+   - Conservative 2-pixel margin.
+   - Guaranteed even width and height for video encoder YUV 4:2:0 compatibility.
+
+6. **AlignmentAnalyzer** (`AlignmentAnalyzer.swift`):
+   - Public API: `analyze(frameCount: Int, loadLuma: @escaping @Sendable (Int) async throws -> PixelImage, times: [Double], config: JobConfig, progress: @Sendable (Int, Int, Double, Double) -> Void) async throws -> (transforms: [FrameTransform], crop: CropRegion, referenceStars: [CGPoint], confidence: Double)`.
+   - Bounded concurrency with worker pool (`max(1, cpuWorkers ?? processorCount)`).
+   - Structured concurrency with cooperative `Task.checkCancellation()`.
+   - Handles cloudy/blank frames with automatic skipping and reacquisition.
+   - Full support for manual tracking (Polaris + optional second star for rotation correction).
+
 ## Implementation Sub-agent (Pass 2 Stacking, Frame Warping, Video Export)
 
 ### Owned Files & Responsibilities
@@ -67,7 +128,7 @@
 - `@Observable @MainActor AppModel`:
   - Holds `JobConfig` draft, sequence (`[SequenceInfo]`), selected reference index, current `JobState`, and `any PullStarEngine`.
   - Folder access via `.fileImporter` supporting directory selection and persisting security-scoped bookmarks in `UserDefaults`.
-  - Settings persisted across launches with `Codable` serialization in `UserDefaults`.\
+  - Settings persisted across launches with `Codable` serialization in `UserDefaults`.
   - Exposes `selectedIndex` and `state` compatibility properties to interoperate seamlessly with `ViewfinderView`, `TelemetryPanel`, and `ResultsView`.
 
 ### Services (`ios/PullStar/Services/`)
@@ -115,3 +176,34 @@ For file export and document handling:
 3. **Results (`ios/PullStar/Views/Results/`)**
    - `ResultsView(state: JobState)`: Showcases the finished star trail stack or image sequence. Includes an interactive before/after split comparison slider, double-tap and pinch-to-zoom, AVKit video player for trail videos, aligned frame count, file paths, and tactile action buttons: Share (`ShareLink`), Save to Photos (`PhotoSaver`), Copy Path, and document export.
    - `PhotoSaver`: `PHPhotoLibrary` add-only photo and video saver with status reporting and error handling.
+
+## Implementation Sub-agent (Engine Orchestration & Lifecycle: PullStarEngineImpl)
+
+### Owned Files & Responsibilities
+- `Sources/PullStarKit/Engine/PullStarEngineImpl.swift`: Production implementation of `PullStarEngine`.
+- `Tests/PullStarKitTests/EngineImplTests.swift`: Comprehensive suite of end-to-end unit tests.
+
+### Architectural Details & Faithfulness to Reference
+1. **Full Protocol Implementation**:
+   - `listSequence(in:sortByTime:)`: Integrates with `SequenceLister`, with security-scoped directory access.
+   - `preview(of:maxDimension:)`: Integrates with `PreviewRenderer`, decoding Core Image / RAW and rendering display-ready JPEG data with security-scoped URL access.
+   - `detectStars(in:config:)`: Decodes luma via `ImageDecoder.decodeLuma`, executes `StarDetector`, maps star coordinates in original source pixel coordinates, determines the optimal second star candidate (maximum Euclidean separation from primary matching Python `auto_selector.py`), and computes confidence score `[0, 1]` based on star count quota and mean SNR.
+   - `computeInfo()`: Returns human-readable hardware string matching UI telemetry format e.g. `"Apple M4 GPU · 10 CPU cores"`.
+   - `run(_:)`: Returns `AsyncStream<JobState>` managing the complete job lifecycle through thread-safe `JobExecutionContext`.
+
+2. **Job Stages & Lifecycle**:
+   - `preparation`: Ensures output directory exists, enumerates sequence, validates required exposure count (minimum 3 for auto mode, 1 for Polaris/noStack).
+   - `conversion`: Active only when `conversionFormat != .none`; batches conversions via `ImageWriter.convertInputs` and manages temporary converted files.
+   - `pass1`: Executes `AlignmentAnalyzer.analyze(...)`, yielding smoothed FPS, frame counters, and real-time drift telemetry `(driftX, driftY)`. Sets reference stars in job detection state.
+   - `cropCalc`: Validates and yields common bounding crop region from the trajectory analysis.
+   - `pass2`: Coordinates `StackPipeline.run(...)`, decodes frames on demand (bounded memory footprint), atomically writes display-ready live previews to system caches, increments `livePreviewRevision`, and emits progress.
+   - `videoRender`: Emitted during hardware-accelerated video compilation when `videoEnabled` is true.
+   - `done`: Writes final output image (guaranteeing extension matching `imageFormat` without duplicate extensions), sets `resultURL`, `videoURL`, `framesDirectory`, and `frameCount`, and emits status `.completed`.
+
+3. **Stage Weights & Progress**:
+   - Matches Python `job_manager.py` weighting logic with monotonic non-decreasing guarantees for `overallProgress`.
+
+4. **Cancellation & Error Handling**:
+   - Responsive cancellation through `AsyncStream.onTermination` and `Task.checkCancellation()`. Emits `.cancelling` followed by `.cancelled`.
+   - Cleans up partial outputs: temporary live preview files, incomplete videos, and temporary conversion directories.
+   - Structured error handling catching all failures, yielding status `.failed` with human-readable error descriptions, and ensuring stream termination. Never crashes.

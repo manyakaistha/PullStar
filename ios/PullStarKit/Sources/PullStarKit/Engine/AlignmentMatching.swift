@@ -84,35 +84,39 @@ public enum StarFieldMatcher {
         target: [CGPoint],
         translation: CGPoint
     ) -> StarMatch? {
-        var usedTarget = Set<Int>()
-        var pairs: [(src: CGPoint, dst: CGPoint)] = []
+        var candidatePairs: [(sIdx: Int, dIdx: Int, d2: Double)] = []
 
-        for src in source {
-            let shifted = CGPoint(x: src.x + translation.x, y: src.y + translation.y)
-            var bestDist = Double.greatestFiniteMagnitude
-            var bestIdx = -1
+        for (sIdx, src) in source.enumerated() {
+            let shiftedX = Double(src.x + translation.x)
+            let shiftedY = Double(src.y + translation.y)
 
-            for (idx, dst) in target.enumerated() {
-                guard !usedTarget.contains(idx) else { continue }
-                let dx = Double(shifted.x - dst.x)
-                let dy = Double(shifted.y - dst.y)
-                let d = sqrt(dx * dx + dy * dy)
-                if d < bestDist {
-                    bestDist = d
-                    bestIdx = idx
+            for (dIdx, dst) in target.enumerated() {
+                let dx = shiftedX - Double(dst.x)
+                let dy = shiftedY - Double(dst.y)
+                let d2 = dx * dx + dy * dy
+                if d2 < (4.0 * 4.0) {
+                    candidatePairs.append((sIdx: sIdx, dIdx: dIdx, d2: d2))
                 }
-            }
-
-            if bestDist < 4.0 && bestIdx >= 0 {
-                pairs.append((src: src, dst: target[bestIdx]))
-                usedTarget.insert(bestIdx)
             }
         }
 
-        guard pairs.count >= minMatches else { return nil }
+        candidatePairs.sort { $0.d2 < $1.d2 }
 
-        let srcPts = pairs.map(\.src)
-        let dstPts = pairs.map(\.dst)
+        var usedS = Set<Int>()
+        var usedD = Set<Int>()
+        var srcPts: [CGPoint] = []
+        var dstPts: [CGPoint] = []
+
+        for pair in candidatePairs {
+            if !usedS.contains(pair.sIdx) && !usedD.contains(pair.dIdx) {
+                usedS.insert(pair.sIdx)
+                usedD.insert(pair.dIdx)
+                srcPts.append(source[pair.sIdx])
+                dstPts.append(target[pair.dIdx])
+            }
+        }
+
+        guard srcPts.count >= minMatches else { return nil }
 
         return validateCorrespondences(
             fullSource: source,
@@ -125,9 +129,9 @@ public enum StarFieldMatcher {
     private struct Triangle {
         var r1: Double
         var r2: Double
-        var i: Int
-        var j: Int
-        var k: Int
+        var a: Int // vertex between L1 and L2 (opposite longest side L3)
+        var b: Int // vertex between L2 and L3 (opposite shortest side L1)
+        var c: Int // vertex between L3 and L1 (opposite middle side L2)
     }
 
     private static func matchPool(
@@ -148,10 +152,10 @@ public enum StarFieldMatcher {
         let sortedDst = dstTriangles.sorted { $0.r1 < $1.r1 }
 
         var bestInliers: (src: [CGPoint], dst: [CGPoint])?
-        var maxInlierCount = 0
+        var bestScore = 0.0
 
-        // Find matching triangle pairs
-        let tolerance = 0.015
+        // Find matching triangle pairs (tolerance for side ratios)
+        let tolerance = 0.04
 
         for sTri in srcTriangles {
             // Binary search in sortedDst for range [sTri.r1 - tolerance, sTri.r1 + tolerance]
@@ -174,64 +178,82 @@ public enum StarFieldMatcher {
                     continue
                 }
 
-                // Hypothesize similarity transform from triangle vertices
-                let sA = srcSubset[sTri.i], sB = srcSubset[sTri.j], sC = srcSubset[sTri.k]
-                let dA = dstSubset[dTri.i], dB = dstSubset[dTri.j], dC = dstSubset[dTri.k]
+                // Hypothesize similarity transform from canonically ordered triangle vertices
+                let sA = srcSubset[sTri.a], sB = srcSubset[sTri.b], sC = srcSubset[sTri.c]
+                let dA = dstSubset[dTri.a], dB = dstSubset[dTri.b], dC = dstSubset[dTri.c]
 
                 guard let (scale, theta, tx, ty) = fitTriangleSimilarity(s1: sA, s2: sB, s3: sC, d1: dA, d2: dB, d3: dC) else {
                     continue
                 }
 
-                // Sky scale should be within [0.97, 1.03]
-                guard scale >= 0.97 && scale <= 1.03 else {
+                // Sky scale should be within [0.98, 1.02] matching astroalign
+                guard scale >= 0.98 && scale <= 1.02 else {
                     continue
                 }
 
-                // Count inliers across full subset
+                // Count inliers across full subset (tolerance = 2.0 px matching astroalign PIXEL_TOL)
                 let cosT = cos(theta) * scale
                 let sinT = sin(theta) * scale
 
-                var inlierSrc: [CGPoint] = []
-                var inlierDst: [CGPoint] = []
-                var usedD = Set<Int>()
-
-                for srcP in srcSubset {
+                // Find all candidate pairs within tolerance
+                var candidatePairs: [(sIdx: Int, dIdx: Int, d2: Double)] = []
+                for (sIdx, srcP) in srcSubset.enumerated() {
                     let predX = cosT * Double(srcP.x) - sinT * Double(srcP.y) + tx
                     let predY = sinT * Double(srcP.x) + cosT * Double(srcP.y) + ty
 
-                    var bestD = Double.greatestFiniteMagnitude
-                    var bestTargetIdx = -1
-
-                    for (tIdx, dstP) in dstSubset.enumerated() {
-                        guard !usedD.contains(tIdx) else { continue }
+                    for (dIdx, dstP) in dstSubset.enumerated() {
                         let dx = predX - Double(dstP.x)
                         let dy = predY - Double(dstP.y)
-                        let d = dx * dx + dy * dy
-                        if d < bestD {
-                            bestD = d
-                            bestTargetIdx = tIdx
+                        let d2 = dx * dx + dy * dy
+                        if d2 <= (2.0 * 2.0) {
+                            candidatePairs.append((sIdx: sIdx, dIdx: dIdx, d2: d2))
                         }
-                    }
-
-                    if bestD < (2.5 * 2.5) && bestTargetIdx >= 0 {
-                        inlierSrc.append(srcP)
-                        inlierDst.append(dstSubset[bestTargetIdx])
-                        usedD.insert(bestTargetIdx)
                     }
                 }
 
-                if inlierSrc.count > maxInlierCount {
-                    maxInlierCount = inlierSrc.count
+                // Sort pairs by distance so closest points pair first (avoids greedy stealing)
+                candidatePairs.sort { $0.d2 < $1.d2 }
+
+                var inlierSrc: [CGPoint] = []
+                var inlierDst: [CGPoint] = []
+                var usedS = Set<Int>()
+                var usedD = Set<Int>()
+
+                for pair in candidatePairs {
+                    if !usedS.contains(pair.sIdx) && !usedD.contains(pair.dIdx) {
+                        usedS.insert(pair.sIdx)
+                        usedD.insert(pair.dIdx)
+                        inlierSrc.append(srcSubset[pair.sIdx])
+                        inlierDst.append(dstSubset[pair.dIdx])
+                    }
+                }
+
+                let count = inlierSrc.count
+                guard count >= minMatches else { continue }
+
+                var sumD2 = 0.0
+                for (sP, dP) in zip(inlierSrc, inlierDst) {
+                    let px = cosT * Double(sP.x) - sinT * Double(sP.y) + tx
+                    let py = sinT * Double(sP.x) + cosT * Double(sP.y) + ty
+                    let ex = px - Double(dP.x)
+                    let ey = py - Double(dP.y)
+                    sumD2 += ex * ex + ey * ey
+                }
+                let candRms = sqrt(sumD2 / Double(count))
+                let candScore = Double(count) / (1.0 + candRms)
+
+                if candScore > bestScore {
+                    bestScore = candScore
                     bestInliers = (inlierSrc, inlierDst)
 
                     // Early exit if strong consensus found
-                    if maxInlierCount >= 30 {
+                    if count >= Int(Double(srcSubset.count) * 0.8) && candRms < 0.5 {
                         break
                     }
                 }
             }
 
-            if maxInlierCount >= 30 {
+            if let inliers = bestInliers, inliers.src.count >= Int(Double(srcSubset.count) * 0.8) {
                 break
             }
         }
@@ -253,7 +275,9 @@ public enum StarFieldMatcher {
         guard n >= 3 else { return [] }
 
         var triangles: [Triangle] = []
-        triangles.reserveCapacity(min(2000, n * 20))
+        triangles.reserveCapacity(min(4000, n * 40))
+
+        var seen = Set<Int>()
 
         // For each point, find up to 8 nearest neighbors
         for i in 0..<n {
@@ -269,35 +293,55 @@ public enum StarFieldMatcher {
 
             for a in 0..<kNearest.count {
                 for b in (a + 1)..<kNearest.count {
-                    let j = kNearest[a].idx
-                    let k = kNearest[b].idx
-                    if i < j && j < k { // Unique triplets
-                        let pJ = points[j]
-                        let pK = points[k]
+                    let idx1 = i
+                    let idx2 = kNearest[a].idx
+                    let idx3 = kNearest[b].idx
 
-                        let d12 = hypot(Double(pI.x - pJ.x), Double(pI.y - pJ.y))
-                        let d23 = hypot(Double(pJ.x - pK.x), Double(pJ.y - pK.y))
-                        let d31 = hypot(Double(pK.x - pI.x), Double(pK.y - pI.y))
+                    // Canonical unique unordered triplet key
+                    let sortedIdx = [idx1, idx2, idx3].sorted()
+                    let key = sortedIdx[0] | (sortedIdx[1] << 10) | (sortedIdx[2] << 20)
+                    guard seen.insert(key).inserted else { continue }
 
-                        var sides = [d12, d23, d31].sorted()
-                        let l1 = sides[0]
-                        let l2 = sides[1]
-                        let l3 = sides[2]
+                    let p1 = points[idx1]
+                    let p2 = points[idx2]
+                    let p3 = points[idx3]
 
-                        // Reject degenerate or collinear triangles
-                        guard l1 >= 10.0, l3 <= 3000.0 else { continue }
-                        let s = (l1 + l2 + l3) * 0.5
-                        let area2 = s * (s - l1) * (s - l2) * (s - l3)
-                        guard area2 >= 225.0 else { continue } // area >= 15
+                    let d12 = hypot(Double(p1.x - p2.x), Double(p1.y - p2.y))
+                    let d23 = hypot(Double(p2.x - p3.x), Double(p2.y - p3.y))
+                    let d31 = hypot(Double(p3.x - p1.x), Double(p3.y - p1.y))
 
-                        triangles.append(Triangle(
-                            r1: l1 / l3,
-                            r2: l2 / l3,
-                            i: i,
-                            j: j,
-                            k: k
-                        ))
-                    }
+                    // Sides with their opposite vertex
+                    var sides: [(len: Double, opp: Int)] = [
+                        (d12, idx3),
+                        (d23, idx1),
+                        (d31, idx2)
+                    ]
+                    sides.sort { $0.len < $1.len }
+
+                    let l1 = sides[0].len
+                    let l2 = sides[1].len
+                    let l3 = sides[2].len
+
+                    // Reject degenerate or collinear triangles
+                    guard l1 >= 3.0, l3 <= 3000.0 else { continue }
+                    let s = (l1 + l2 + l3) * 0.5
+                    let area2 = s * (s - l1) * (s - l2) * (s - l3)
+                    guard area2 >= 1.0 else { continue }
+
+                    // Vertex opposite to L3 is between L1 and L2
+                    let vA = sides[2].opp
+                    // Vertex opposite to L1 is between L2 and L3
+                    let vB = sides[0].opp
+                    // Vertex opposite to L2 is between L3 and L1
+                    let vC = sides[1].opp
+
+                    triangles.append(Triangle(
+                        r1: l1 / l3,
+                        r2: l2 / l3,
+                        a: vA,
+                        b: vB,
+                        c: vC
+                    ))
                 }
             }
         }
@@ -398,7 +442,7 @@ public enum StarFieldMatcher {
                 syy += dsy * ddy
             }
 
-            // Closed-form 2D optimal rotation angle: theta = atan2(syx - sxy, sxx + syy)
+            // Closed-form 2D optimal rotation angle matching SVD
             let theta = atan2(sxy - syx, sxx + syy)
             let cosT = cos(theta)
             let sinT = sin(theta)
@@ -453,7 +497,7 @@ public enum StarFieldMatcher {
             minY = min(minY, y)
             maxY = max(maxY, y)
         }
-        let spread = max(maxX - minX, maxY - minY)
+        let spread = hypot(maxX - minX, maxY - minY)
 
         guard m >= required, rms <= 1.5, spread >= 20.0 else {
             return nil

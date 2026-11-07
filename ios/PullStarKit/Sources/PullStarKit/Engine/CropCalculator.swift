@@ -86,8 +86,8 @@ public enum CropCalculator {
             bottom = min(bottom, h + minDispY)
         }
 
-        var x0 = Int(ceil(left)) + 2
-        var y0 = Int(ceil(top)) + 2
+        let x0 = Int(ceil(left)) + 2
+        let y0 = Int(ceil(top)) + 2
         var x1 = Int(floor(right)) - 2
         var y1 = Int(floor(bottom)) - 2
 
