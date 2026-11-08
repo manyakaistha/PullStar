@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 — 2026-11-08
+
+- Source archive and repository no longer include unrelated in-progress Rust development files that were committed by mistake in 1.0.1. The app itself is unchanged from 1.0.1.
+
 ## 1.0.1 — 2026-11-07
 
 - Fix the live trail preview showing blue night skies with red and blue swapped (warm/orange). Final images and videos were unaffected.
