@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["find_menu_root","is_in_menu","menu_style"],"struct":["MenuBar","MenuButton","MenuConfig","MenuState","SubMenu","SubMenuButton"]};

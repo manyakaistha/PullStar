@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["IdTypeMap","RawKey","TypeId"],"trait":["SerializableAny"]};

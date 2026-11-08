@@ -1,2 +1,0 @@
-window.ALL_CRATES = ["pullstar_astro","pullstar_cli","pullstar_desktop","pullstar_domain","pullstar_engine","pullstar_io","pullstar_mcp","pullstar_render","pullstar_service","xtask"];
-//{"start":21,"fragment_lengths":[16,15,19,18,18,14,15,18,19,8]}

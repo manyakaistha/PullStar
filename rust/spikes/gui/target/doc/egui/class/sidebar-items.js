@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["ROOT"],"struct":["ClassName","Classes"],"trait":["HasClasses"]};

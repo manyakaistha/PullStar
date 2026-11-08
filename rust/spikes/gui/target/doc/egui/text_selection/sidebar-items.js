@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["accesskit_text","text_cursor_state","visuals"],"struct":["CCursorRange","LabelSelectionState"]};

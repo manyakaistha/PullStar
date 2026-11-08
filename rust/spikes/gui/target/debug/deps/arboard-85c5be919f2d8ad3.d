@@ -1,8 +1,0 @@
-/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/arboard-85c5be919f2d8ad3.d: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/common.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/platform/mod.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/platform/osx.rs
-
-/Volumes/1700 APFS/PERSONAL_PROGRAMMING_PROJECTS/StarAligner/PullStar/rust/spikes/gui/target/debug/deps/libarboard-85c5be919f2d8ad3.rmeta: /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/lib.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/common.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/platform/mod.rs /Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/platform/osx.rs
-
-/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/lib.rs:
-/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/common.rs:
-/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/platform/mod.rs:
-/Users/manyakaistha/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/arboard-3.7.0/src/platform/osx.rs:

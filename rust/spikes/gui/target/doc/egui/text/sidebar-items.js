@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["FontFamily"],"struct":["ByteIndex","CCursor","CharIndex","FontData","FontDefinitions","Fonts","Galley","LayoutJob","LayoutSection","TextFormat","TextWrapping"],"type":["ByteRange","CharRange"]};
