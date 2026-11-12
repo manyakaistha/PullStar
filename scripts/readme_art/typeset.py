@@ -7,7 +7,6 @@ correctly.
 """
 from __future__ import annotations
 
-from functools import lru_cache
 from pathlib import Path
 
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -23,12 +22,12 @@ def _num(v: float) -> str:
 
 
 class Face:
-    def __init__(self, file: str, wght: float | None = None):
+    def __init__(self, file: str, axes: dict[str, float] | None = None):
         font = TTFont(FONT_DIR / file)
-        if wght is not None and "fvar" in font:
+        if axes and "fvar" in font:
             from fontTools.varLib import instancer
 
-            font = instancer.instantiateVariableFont(font, {"wght": wght})
+            font = instancer.instantiateVariableFont(font, axes)
         self.font = font
         self.upm = font["head"].unitsPerEm
         self.cmap = font.getBestCmap()
@@ -107,18 +106,3 @@ class Face:
 
     def width(self, text: str, size: float, tracking: float = 0.0) -> float:
         return self.layout(text, size, tracking)[1]
-
-
-@lru_cache(None)
-def serif() -> Face:
-    return Face("InstrumentSerif-Regular.ttf")
-
-
-@lru_cache(None)
-def italic() -> Face:
-    return Face("InstrumentSerif-Italic.ttf")
-
-
-@lru_cache(None)
-def mono() -> Face:
-    return Face("JetBrainsMono-Variable.ttf", wght=430)

@@ -1,4 +1,4 @@
-<a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/hero-still.svg" /><img src="docs/images/readme/hero-motion.svg" width="100%" alt="PullStar — Align the night. Keep the motion. Shaken night-sky frames spring into alignment, then the stars expose into trails around the celestial pole." /></picture></a>
+<a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/hero-still.svg" /><img src="docs/images/readme/hero-motion.svg" width="100%" alt="PullStar — Align the night. Keep the motion. A two-colour risograph print whose blue and pink plates spring into register, then star trails are knocked out of a solid blue night sky." /></picture></a>
 
 <p align="center">
   <a href="https://github.com/manyakaistha/PullStar/releases/latest"><strong>Download for macOS ↗</strong></a> &nbsp;·&nbsp;
@@ -9,8 +9,8 @@
 
 <p align="center">
   <a href="https://github.com/manyakaistha/PullStar/actions/workflows/ci.yml"><img src="https://github.com/manyakaistha/PullStar/actions/workflows/ci.yml/badge.svg?branch=main" alt="Continuous integration"></a>
-  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><img src="https://img.shields.io/github/v/release/manyakaistha/PullStar?label=release&amp;color=ffa64d&amp;labelColor=0a0f1c&amp;style=flat-square" alt="Latest release"></a>
-  <a href="#get-pullstar"><img src="https://img.shields.io/badge/macOS_14%2B-Apple_Silicon-8a92a6?style=flat-square&amp;labelColor=0a0f1c&amp;logo=apple&amp;logoColor=white" alt="macOS 14 or later, Apple Silicon"></a>
+  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><img src="https://img.shields.io/github/v/release/manyakaistha/PullStar?label=release&amp;color=ff48b0&amp;labelColor=0078bf&amp;style=flat-square" alt="Latest release"></a>
+  <a href="#get-pullstar"><img src="https://img.shields.io/badge/macOS_14%2B-Apple_Silicon-ff48b0?style=flat-square&amp;labelColor=0078bf&amp;logo=apple&amp;logoColor=white" alt="macOS 14 or later, Apple Silicon"></a>
 </p>
 
 <p align="center"><sub>A night-sky sequence captures hours of motion — and every small movement of the camera.<br />PullStar corrects the wobble and keeps the sky’s natural rotation, so your stars keep their trails.</sub></p>
@@ -40,31 +40,13 @@ Automatic alignment detects stars in each exposure and matches the field, includ
 
 ## Choose your finish
 
-<table>
-<tr>
-<td width="33%" valign="top">
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finishes-still.svg" /><img src="docs/images/readme/finishes-motion.svg" width="100%" alt="Choose your finish: A, aligned frames as TIFF, PNG, or JPEG with a common crop; B, a trail image with the foreground kept; C, a trail-lapse video as MP4 or MOV." /></picture>
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finish-frames-still.svg" /><img src="docs/images/readme/finish-frames-motion.svg" width="100%" alt="A — Aligned frames. A TIFF, PNG, or JPEG sequence with a common crop, for another editor." /></picture>
-
-**Steadier frames for another editor.** An aligned TIFF, PNG, or JPEG sequence with a common crop. Skip trail creation entirely.
-
-</td>
-<td width="33%" valign="top">
-
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finish-trails-still.svg" /><img src="docs/images/readme/finish-trails-motion.svg" width="100%" alt="B — Trail image. A stacked star-trail still with the foreground preserved." /></picture>
-
-**A finished star-trail image.** A TIFF, PNG, or JPEG stack, with optional gap filling and synthetic trail extension.
-
-</td>
-<td width="33%" valign="top">
-
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finish-video-still.svg" /><img src="docs/images/readme/finish-video-motion.svg" width="100%" alt="C — Trail-lapse video. MP4 or MOV with H.264, HEVC, lossless H.264, or ProRes." /></picture>
-
-**A trail-lapse video.** MP4 or MOV, with H.264, HEVC, lossless H.264, or ProRes options. ProRes uses MOV.
-
-</td>
-</tr>
-</table>
+| | What you want | What PullStar exports |
+| :-- | :--- | :--- |
+| **A** | **Steadier frames for another editor** | An aligned TIFF, PNG, or JPEG sequence with a common crop. Skip trail creation entirely. |
+| **B** | **A finished star-trail image** | A TIFF, PNG, or JPEG stack, with optional gap filling and synthetic trail extension. |
+| **C** | **A trail-lapse video** | MP4 or MOV, with H.264, HEVC, lossless H.264, or ProRes options. ProRes uses MOV. |
 
 <sub>TIFF and PNG retain 16-bit data when the processing path provides it. JPEG is 8-bit. RAW inputs are developed into pixels; exports are not camera RAW or DNG files. See the [export workflow](docs/export-workflow.md) for format and destination details.</sub>
 
@@ -119,9 +101,9 @@ For RAW development, output bit depth, shared cropping, and export destinations,
 
 ## MCP integration
 
-<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/mcp-still.svg" /><img src="docs/images/readme/mcp-motion.svg" width="100%" alt="Fifteen MCP tools for your agent: inspect, preview, export, and manage jobs. An example session calls inspect_sequence, recommend_settings, render_preview_stack, start_stack_job, and get_job_status." /></picture>
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/mcp-still.svg" /><img src="docs/images/readme/mcp-motion.svg" width="100%" alt="A job ticket for fifteen MCP tools. An example agent session ticks inspect_sequence, recommend_settings, render_preview_stack, start_stack_job, and get_job_status." /></picture>
 
-**Let an agent drive the darkroom.** PullStar includes **15 MCP tools** for sequence inspection, star analysis, settings recommendations, alignment comparisons, previews, quality evaluation, exports, and background jobs. The server ships in this repository’s `main` branch and inside the macOS app.
+**Hand the job ticket to an agent.** PullStar includes **15 MCP tools** for sequence inspection, star analysis, settings recommendations, alignment comparisons, previews, quality evaluation, exports, and background jobs. The server ships in this repository’s `main` branch and inside the macOS app.
 
 Add this entry to your MCP client configuration after installing PullStar in **Applications**:
 
@@ -230,6 +212,6 @@ Exact dependency versions are recorded in [`frontend/package-lock.json`](fronten
 
 The original PullStar code and artwork are **copyright © 2026 Manya Kaistha, all rights reserved**. This repository is public for inspection; no open-source license is granted. See [LICENSE](LICENSE).
 
-Bundled dependencies retain their own licenses. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [COPYING](COPYING) describe the applicable third-party terms. README artwork is set in Instrument Serif and JetBrains Mono (SIL Open Font License; see [`scripts/readme_art/fonts`](scripts/readme_art/fonts)).
+Bundled dependencies retain their own licenses. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [COPYING](COPYING) describe the applicable third-party terms. README artwork is a two-colour risograph-style run set in Big Shoulders Display, Space Mono, and Fraunces (SIL Open Font License; see [`scripts/readme_art/fonts`](scripts/readme_art/fonts)).
 
 <a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/footer-still.svg" /><img src="docs/images/readme/footer-motion.svg" width="100%" alt="Clear skies. Download PullStar for macOS 14 or later on Apple Silicon." /></picture></a>
