@@ -1,7 +1,7 @@
 <a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/hero-still.svg" /><img src="docs/images/readme/hero-motion.svg" width="100%" alt="PullStar — Align the night. Keep the motion. Shaken night-sky frames spring into alignment, then the stars expose into trails around the celestial pole." /></picture></a>
 
 <p align="center">
-  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><strong>Download for macOS ↗</strong></a> &nbsp;·&nbsp;
+  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><strong>Download for macOS &amp; Linux ↗</strong></a> &nbsp;·&nbsp;
   <a href="#your-first-session">Quick start</a> &nbsp;·&nbsp;
   <a href="#mcp-integration">MCP setup</a> &nbsp;·&nbsp;
   <a href="#explore-the-documentation">Documentation</a>
@@ -11,6 +11,7 @@
   <a href="https://github.com/manyakaistha/PullStar/actions/workflows/ci.yml"><img src="https://github.com/manyakaistha/PullStar/actions/workflows/ci.yml/badge.svg?branch=main" alt="Continuous integration"></a>
   <a href="https://github.com/manyakaistha/PullStar/releases/latest"><img src="https://img.shields.io/github/v/release/manyakaistha/PullStar?label=release&amp;color=ffa64d&amp;labelColor=0a0f1c&amp;style=flat-square" alt="Latest release"></a>
   <a href="#get-pullstar"><img src="https://img.shields.io/badge/macOS_14%2B-Apple_Silicon-8a92a6?style=flat-square&amp;labelColor=0a0f1c&amp;logo=apple&amp;logoColor=white" alt="macOS 14 or later, Apple Silicon"></a>
+  <a href="#linux"><img src="https://img.shields.io/badge/Linux-x86__64-8a92a6?style=flat-square&amp;labelColor=0a0f1c&amp;logo=linux&amp;logoColor=white" alt="Linux x86-64: AppImage, deb, rpm, tar.gz"></a>
 </p>
 
 <p align="center"><sub>A night-sky sequence captures hours of motion — and every small movement of the camera.<br />PullStar corrects the wobble and keeps the sky’s natural rotation, so your stars keep their trails.</sub></p>
@@ -84,7 +85,9 @@ Automatic alignment detects stars in each exposure and matches the field, includ
 
 ## Get PullStar
 
-The current desktop release supports **Apple Silicon Macs running macOS 14 or later**. Python, FFmpeg, and the processing libraries are bundled in the installer.
+The current desktop release supports **Apple Silicon Macs running macOS 14 or later** and **x86-64 Linux**. Python, FFmpeg, and the processing libraries are bundled in every installer.
+
+### macOS
 
 1. Download the **[latest macOS DMG ↗](https://github.com/manyakaistha/PullStar/releases/latest)**.
 2. Open it and drag **PullStar** into **Applications**.
@@ -92,6 +95,20 @@ The current desktop release supports **Apple Silicon Macs running macOS 14 or la
 
 > [!IMPORTANT]
 > The current release is **ad-hoc signed and not Apple-notarized**. macOS may block its first launch. If you trust the downloaded release, use **System Settings → Privacy & Security → Open Anyway** after the first launch attempt.
+
+### Linux
+
+Download the package that suits your distribution from the **[latest release ↗](https://github.com/manyakaistha/PullStar/releases/latest)**:
+
+| Package | Best for | Install |
+| --- | --- | --- |
+| `PullStar-<version>-linux-x86_64.AppImage` | Any distribution | `chmod +x PullStar-*.AppImage`, then run it |
+| `PullStar-<version>-linux-amd64.deb` | Debian, Ubuntu, Linux Mint and derivatives | `sudo apt install ./PullStar-*-linux-amd64.deb` |
+| `PullStar-<version>-linux-x86_64.rpm` | Fedora, RHEL-family and openSUSE | `sudo dnf install ./PullStar-*-linux-x86_64.rpm` |
+| `PullStar-<version>-linux-x64.tar.gz` | Manual install | Extract it and launch the `PullStar` executable |
+
+> [!NOTE]
+> The Linux packages are new. They are built for **x86-64** on **Ubuntu 20.04** (glibc 2.31) so they can run on older distributions, but they have only been smoke-tested on that build environment so far. The AppImage needs FUSE 2 on some distributions (`libfuse2`); if it will not start, run it with `--appimage-extract-and-run`. The `.rpm` is **unsigned**, so your package manager may ask you to skip the signature check. Please [open an issue](https://github.com/manyakaistha/PullStar/issues) if PullStar does not run on your distribution.
 
 <details>
 <summary><strong>Verify the download and check compatibility</strong></summary>
@@ -102,7 +119,13 @@ Download `SHA256SUMS.txt` from the same release and compare its DMG entry agains
 shasum -a 256 PullStar-1.0.2-macOS-arm64.dmg
 ```
 
-The packaged app has been tested on macOS 27.0.1. Intel Macs and other desktop platforms require a source installation; separate installers have not been validated.
+On Linux, download the package and `SHA256SUMS.txt` into the same folder, then run:
+
+```bash
+sha256sum --ignore-missing -c SHA256SUMS.txt
+```
+
+The packaged macOS app has been tested on macOS 27.0.1. The Linux packages are x86-64 only and were smoke-tested on Ubuntu 20.04 (backend, image and video export, and a headless app launch). Intel Macs, Windows, and ARM Linux require a source installation; separate installers have not been validated.
 
 Camera RAW support depends on the encoding supported by LibRaw/rawpy. An embedded DNG preview can display even when the underlying RAW pixels cannot be decoded for alignment or export. See [DNG support](docs/dng-viewing.md).
 
@@ -121,7 +144,7 @@ For RAW development, output bit depth, shared cropping, and export destinations,
 
 <picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/mcp-still.svg" /><img src="docs/images/readme/mcp-motion.svg" width="100%" alt="Fifteen MCP tools for your agent: inspect, preview, export, and manage jobs. An example session calls inspect_sequence, recommend_settings, render_preview_stack, start_stack_job, and get_job_status." /></picture>
 
-**Let an agent drive the darkroom.** PullStar includes **15 MCP tools** for sequence inspection, star analysis, settings recommendations, alignment comparisons, previews, quality evaluation, exports, and background jobs. The server ships in this repository’s `main` branch and inside the macOS app.
+**Let an agent drive the darkroom.** PullStar includes **15 MCP tools** for sequence inspection, star analysis, settings recommendations, alignment comparisons, previews, quality evaluation, exports, and background jobs. The server ships in this repository’s `main` branch and inside the macOS and Linux apps.
 
 Add this entry to your MCP client configuration after installing PullStar in **Applications**:
 
@@ -136,7 +159,7 @@ Add this entry to your MCP client configuration after installing PullStar in **A
 }
 ```
 
-No separate Python installation is needed for the bundled server. For a source checkout, run:
+On Linux, point `command` at `resources/backend/pullstar-backend` inside the PullStar install directory. No separate Python installation is needed for the bundled server. For a source checkout, run:
 
 ```bash
 uv --directory /absolute/path/to/PullStar run pullstar-mcp
@@ -206,7 +229,7 @@ To rebuild the README artwork after a version bump: `uv run --with fonttools pyt
 | **RAW development** | **rawpy · LibRaw** — supported camera RAW decoding and embedded previews. |
 | **Acceleration & video** | **PyOpenCL · FFmpeg** — optional GPU processing and video encoding, with CPU fallback for image processing. |
 | **Automation** | **MCP Python SDK** — tools, resources, and prompts over stdio, SSE, and Streamable HTTP. |
-| **Build & distribution** | **Vite · uv · npm · PyInstaller · Electron Builder** — frontend builds, dependency management, standalone Python bundling, and the macOS DMG. |
+| **Build & distribution** | **Vite · uv · npm · PyInstaller · Electron Builder** — frontend builds, dependency management, standalone Python bundling, and the macOS DMG and Linux AppImage, `.deb`, `.rpm`, and `.tar.gz` packages. |
 
 Exact dependency versions are recorded in [`frontend/package-lock.json`](frontend/package-lock.json) and [`uv.lock`](uv.lock). Release assets include a dependency inventory and [third-party notices](THIRD_PARTY_NOTICES.md).
 
@@ -232,4 +255,4 @@ The original PullStar code and artwork are **copyright © 2026 Manya Kaistha, al
 
 Bundled dependencies retain their own licenses. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [COPYING](COPYING) describe the applicable third-party terms. README artwork is set in Instrument Serif and JetBrains Mono (SIL Open Font License; see [`scripts/readme_art/fonts`](scripts/readme_art/fonts)).
 
-<a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/footer-still.svg" /><img src="docs/images/readme/footer-motion.svg" width="100%" alt="Clear skies. Download PullStar for macOS 14 or later on Apple Silicon." /></picture></a>
+<a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/footer-still.svg" /><img src="docs/images/readme/footer-motion.svg" width="100%" alt="Clear skies. Download PullStar for macOS 14 or later on Apple Silicon, or for x86-64 Linux." /></picture></a>

@@ -6,11 +6,13 @@ The PullStar **Model Context Protocol (MCP) Server** enables AI agents (Claude C
 
 ## 1. Running the MCP Server
 
-The installed macOS app provides the server without Python or uv:
+The installed desktop app provides the server without Python or uv. On macOS:
 
 ```bash
 /Applications/PullStar.app/Contents/Resources/backend/pullstar-backend --mcp
 ```
+
+On Linux, run `resources/backend/pullstar-backend --mcp` from the PullStar install directory.
 
 Use the client configuration in the repository root’s `mcp.json.example`. Paths containing spaces must be supplied as a single command value, without shell quoting inside JSON. MCP starts independently from the desktop UI; each process has its own job list. `create_stack` and `start_stack_job` accept `image_format` (`tiff`, `png`, `jpg`) and `video_format` (`auto`, `mp4`, `mov`). Set `save_frames=true` and `no_stack=true` for aligned-image export without trails; disable video for that workflow.
 
