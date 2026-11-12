@@ -1,68 +1,92 @@
+<a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/hero-still.svg" /><img src="docs/images/readme/hero-motion.svg" width="100%" alt="PullStar — Align the night. Keep the motion. Shaken night-sky frames spring into alignment, then the stars expose into trails around the celestial pole." /></picture></a>
+
 <p align="center">
-  <img src="frontend/public/app-icon.png" width="112" height="112" alt="PullStar — tapered white star trails on a dark tile">
+  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><strong>Download for macOS ↗</strong></a> &nbsp;·&nbsp;
+  <a href="#your-first-session">Quick start</a> &nbsp;·&nbsp;
+  <a href="#mcp-integration">MCP setup</a> &nbsp;·&nbsp;
+  <a href="#explore-the-documentation">Documentation</a>
 </p>
-
-<h1 align="center">PullStar</h1>
-
-<p align="center"><strong>Align the night. Keep the motion.</strong></p>
-<p align="center">Steadier exposures. Smoother star trails. Your workflow.</p>
 
 <p align="center">
   <a href="https://github.com/manyakaistha/PullStar/actions/workflows/ci.yml"><img src="https://github.com/manyakaistha/PullStar/actions/workflows/ci.yml/badge.svg?branch=main" alt="Continuous integration"></a>
-  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><img src="https://img.shields.io/github/v/release/manyakaistha/PullStar?label=release&amp;color=7d9d93" alt="Latest release"></a>
-  <a href="#get-pullstar"><img src="https://img.shields.io/badge/macOS-14%2B%20%C2%B7%20Apple%20Silicon-333333?logo=apple&amp;logoColor=white" alt="macOS 14 or later, Apple Silicon"></a>
+  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><img src="https://img.shields.io/github/v/release/manyakaistha/PullStar?label=release&amp;color=ffa64d&amp;labelColor=0a0f1c&amp;style=flat-square" alt="Latest release"></a>
+  <a href="#get-pullstar"><img src="https://img.shields.io/badge/macOS_14%2B-Apple_Silicon-8a92a6?style=flat-square&amp;labelColor=0a0f1c&amp;logo=apple&amp;logoColor=white" alt="macOS 14 or later, Apple Silicon"></a>
 </p>
 
-<p align="center">
-  <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-47848F?style=flat-square&amp;logo=electron&amp;logoColor=white" alt="Electron"></a>
-  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-20232A?style=flat-square&amp;logo=react&amp;logoColor=61DAFB" alt="React"></a>
-  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&amp;logo=typescript&amp;logoColor=white" alt="TypeScript"></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python"></a>
-  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&amp;logo=fastapi&amp;logoColor=white" alt="FastAPI"></a>
-  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&amp;logo=tailwindcss&amp;logoColor=white" alt="Tailwind CSS"></a>
-</p>
+<p align="center"><sub>A night-sky sequence captures hours of motion — and every small movement of the camera.<br />PullStar corrects the wobble and keeps the sky’s natural rotation, so your stars keep their trails.</sub></p>
+
+### Steadier exposures. Smoother star trails. Your workflow.
+
+Export the aligned exposures to your preferred editor, or create a trail image and trail-lapse video in PullStar. **Processing runs locally on your computer** — no account or cloud upload is required.
 
 <p align="center">
-  <a href="https://github.com/manyakaistha/PullStar/releases/latest"><strong>Download for macOS</strong></a> &nbsp;·&nbsp;
-  <a href="#your-first-session">Quick start</a> &nbsp;·&nbsp;
-  <a href="#mcp-integration">MCP setup</a> &nbsp;·&nbsp;
-  <a href="#technology-stack">Technology stack</a>
-</p>
-
-<p align="center">
-  <img src="docs/images/workspace.png" alt="PullStar’s dark alignment workspace, with a large image viewfinder, frame sequence, processing activity, and export settings">
+  <img src="docs/images/workspace.png" width="100%" alt="PullStar’s dark alignment workspace, with a large image viewfinder, frame sequence, processing activity, and export settings">
   <br>
   <sub>The alignment studio. Preview your frames, choose your workflow, and follow processing in one workspace.</sub>
 </p>
 
-A night-sky sequence can capture hours of beautiful motion—and every small movement of the camera. PullStar corrects camera wobble while preserving the sky’s natural rotation, so your stars keep their trails.
+## How it works
 
-Export the aligned exposures to your preferred editor, or create a trail image and trail-lapse video in PullStar. Processing runs locally on your computer; no account or cloud upload is required.
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/pipeline-still.svg" /><img src="docs/images/readme/pipeline-motion.svg" width="100%" alt="How PullStar works: 01 load the sequence, 02 match the star field (Polaris optional), 03 remove the camera wobble while keeping sky rotation, 04 export frames, trails, or video." /></picture>
+
+**Correct the camera, not the sky.** PullStar matches the stellar field from frame to frame, solves for the camera’s movement, and removes it — while leaving the slow rotation of the sky intact. That rotation is what draws the trails.
+
+<details>
+<summary><strong>Inside the alignment</strong></summary>
+
+Automatic alignment detects stars in each exposure and matches the field, including sequences with the celestial pole outside the image. Manual reference tracking is available when you need it. See [automatic alignment](docs/automatic-star-alignment.md) for the matching, motion correction, and algorithm validation.
+
+</details>
 
 ## Choose your finish
 
-| What you want | What PullStar exports |
-| :--- | :--- |
-| **Steadier frames for another editor** | An aligned TIFF, PNG, or JPEG sequence with a common crop. Skip trail creation entirely. |
-| **A finished star-trail image** | A TIFF, PNG, or JPEG stack, with optional gap filling and synthetic trail extension. |
-| **A trail-lapse video** | MP4 or MOV, with H.264, HEVC, lossless H.264, or ProRes options. ProRes uses MOV. |
+<table>
+<tr>
+<td width="33%" valign="top">
 
-TIFF and PNG retain 16-bit data when the processing path provides it. JPEG is 8-bit. RAW inputs are developed into pixels; exports are not camera RAW or DNG files. See the [export workflow](docs/export-workflow.md) for format and destination details.
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finish-frames-still.svg" /><img src="docs/images/readme/finish-frames-motion.svg" width="100%" alt="A — Aligned frames. A TIFF, PNG, or JPEG sequence with a common crop, for another editor." /></picture>
+
+**Steadier frames for another editor.** An aligned TIFF, PNG, or JPEG sequence with a common crop. Skip trail creation entirely.
+
+</td>
+<td width="33%" valign="top">
+
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finish-trails-still.svg" /><img src="docs/images/readme/finish-trails-motion.svg" width="100%" alt="B — Trail image. A stacked star-trail still with the foreground preserved." /></picture>
+
+**A finished star-trail image.** A TIFF, PNG, or JPEG stack, with optional gap filling and synthetic trail extension.
+
+</td>
+<td width="33%" valign="top">
+
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/finish-video-still.svg" /><img src="docs/images/readme/finish-video-motion.svg" width="100%" alt="C — Trail-lapse video. MP4 or MOV with H.264, HEVC, lossless H.264, or ProRes." /></picture>
+
+**A trail-lapse video.** MP4 or MOV, with H.264, HEVC, lossless H.264, or ProRes options. ProRes uses MOV.
+
+</td>
+</tr>
+</table>
+
+<sub>TIFF and PNG retain 16-bit data when the processing path provides it. JPEG is 8-bit. RAW inputs are developed into pixels; exports are not camera RAW or DNG files. See the [export workflow](docs/export-workflow.md) for format and destination details.</sub>
 
 ## Made for the night sky
 
-- **Polaris is optional.** Automatic alignment matches the stellar field, including sequences with the celestial pole outside the image. Manual reference tracking is available when you need it.
-- **Keep natural sky motion.** Correct the camera’s wobble while retaining the rotation that creates trails.
-- **Work with your exposures.** View JPEG, PNG, TIFF, and supported camera RAW files, with zoom, reference selection, and a frame filmstrip.
-- **Shape the result.** Preserve the foreground, fill timestamp gaps, and optionally extend or taper synthetic trails. Synthetic frames model motion; they do not recover missing observed detail.
-- **Control the workload.** Choose image and video resolutions, use memory-bounded CPU processing or supported OpenCL acceleration, and cancel active work from the workspace.
-- **Automate the workflow.** Use the included MCP server to inspect a sequence, compare settings, render previews, and manage exports.
+**Polaris is optional.** Automatic alignment matches the stellar field, including sequences with the celestial pole outside the image. Manual reference tracking is available when you need it.
+
+**Keep natural sky motion.** Correct the camera’s wobble while retaining the rotation that creates trails.
+
+**Work with your exposures.** View JPEG, PNG, TIFF, and supported camera RAW files, with zoom, reference selection, and a frame filmstrip.
+
+**Shape the result.** Preserve the foreground, fill timestamp gaps, and optionally extend or taper synthetic trails. Synthetic frames model motion; they do not recover missing observed detail.
+
+**Control the workload.** Choose image and video resolutions, use memory-bounded CPU processing or supported OpenCL acceleration, and cancel active work from the workspace.
+
+**Automate the workflow.** Use the included MCP server to inspect a sequence, compare settings, render previews, and manage exports.
 
 ## Get PullStar
 
 The current desktop release supports **Apple Silicon Macs running macOS 14 or later**. Python, FFmpeg, and the processing libraries are bundled in the installer.
 
-1. Download the **[latest macOS DMG](https://github.com/manyakaistha/PullStar/releases/latest)**.
+1. Download the **[latest macOS DMG ↗](https://github.com/manyakaistha/PullStar/releases/latest)**.
 2. Open it and drag **PullStar** into **Applications**.
 3. Launch PullStar and choose your exposure folder.
 
@@ -93,27 +117,11 @@ Camera RAW support depends on the encoding supported by LibRaw/rawpy. An embedde
 
 For RAW development, output bit depth, shared cropping, and export destinations, read the [image and video export guide](docs/export-workflow.md).
 
-## Technology stack
-
-The interface runs in Electron. A local Python service handles image processing and sends progress to the workspace over WebSockets. The MCP server exposes the processing engine to compatible automation clients.
-
-| Layer | Technologies and purpose |
-| :--- | :--- |
-| **Desktop & interface** | **Electron · React · TypeScript** — desktop shell, native folder selection, and the alignment workspace. |
-| **Styling & interaction** | **Tailwind CSS · Framer Motion · Lucide** — styling, motion, and interface icons. |
-| **Local API** | **Python · FastAPI · Pydantic · Uvicorn · WebSockets** — validated job requests, background processing, and live progress. |
-| **Astronomy** | **Photutils · Astroalign · Astropy** — star detection, field matching, and astronomical calculations. |
-| **Images & scientific computing** | **NumPy · SciPy · OpenCV · scikit-image · Pillow** — transforms, filtering, blending, previews, and image export. |
-| **RAW development** | **rawpy · LibRaw** — supported camera RAW decoding and embedded previews. |
-| **Acceleration & video** | **PyOpenCL · FFmpeg** — optional GPU processing and video encoding, with CPU fallback for image processing. |
-| **Automation** | **MCP Python SDK** — tools, resources, and prompts over stdio, SSE, and Streamable HTTP. |
-| **Build & distribution** | **Vite · uv · npm · PyInstaller · Electron Builder** — frontend builds, dependency management, standalone Python bundling, and the macOS DMG. |
-
-Exact dependency versions are recorded in [`frontend/package-lock.json`](frontend/package-lock.json) and [`uv.lock`](uv.lock). Release assets include a dependency inventory and [third-party notices](THIRD_PARTY_NOTICES.md).
-
 ## MCP integration
 
-PullStar includes **15 MCP tools** for sequence inspection, star analysis, settings recommendations, alignment comparisons, previews, quality evaluation, exports, and background jobs. The server ships in this repository’s `main` branch and inside the macOS app.
+<picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/mcp-still.svg" /><img src="docs/images/readme/mcp-motion.svg" width="100%" alt="Fifteen MCP tools for your agent: inspect, preview, export, and manage jobs. An example session calls inspect_sequence, recommend_settings, render_preview_stack, start_stack_job, and get_job_status." /></picture>
+
+**Let an agent drive the darkroom.** PullStar includes **15 MCP tools** for sequence inspection, star analysis, settings recommendations, alignment comparisons, previews, quality evaluation, exports, and background jobs. The server ships in this repository’s `main` branch and inside the macOS app.
 
 Add this entry to your MCP client configuration after installing PullStar in **Applications**:
 
@@ -177,7 +185,34 @@ npm --prefix frontend run package:mac
 
 The DMG is written to `release/`. See [release engineering](docs/releases.md) for packaging, signing, and validation. The [1.0.0 validation report](docs/release-validation.md) records the application tests and installed-app checks performed for the release.
 
+To rebuild the README artwork after a version bump: `uv run --with fonttools python scripts/readme_art/build.py`.
+
 </details>
+
+## Technology stack
+
+**A desktop shell, a local engine, and an open door for automation.** The interface runs in Electron. A local Python service handles image processing and sends progress to the workspace over WebSockets. The MCP server exposes the processing engine to compatible automation clients.
+
+<details>
+<summary><strong>Inside the build</strong></summary>
+
+| Layer | Technologies and purpose |
+| :--- | :--- |
+| **Desktop & interface** | **Electron · React · TypeScript** — desktop shell, native folder selection, and the alignment workspace. |
+| **Styling & interaction** | **Tailwind CSS · Framer Motion · Lucide** — styling, motion, and interface icons. |
+| **Local API** | **Python · FastAPI · Pydantic · Uvicorn · WebSockets** — validated job requests, background processing, and live progress. |
+| **Astronomy** | **Photutils · Astroalign · Astropy** — star detection, field matching, and astronomical calculations. |
+| **Images & scientific computing** | **NumPy · SciPy · OpenCV · scikit-image · Pillow** — transforms, filtering, blending, previews, and image export. |
+| **RAW development** | **rawpy · LibRaw** — supported camera RAW decoding and embedded previews. |
+| **Acceleration & video** | **PyOpenCL · FFmpeg** — optional GPU processing and video encoding, with CPU fallback for image processing. |
+| **Automation** | **MCP Python SDK** — tools, resources, and prompts over stdio, SSE, and Streamable HTTP. |
+| **Build & distribution** | **Vite · uv · npm · PyInstaller · Electron Builder** — frontend builds, dependency management, standalone Python bundling, and the macOS DMG. |
+
+Exact dependency versions are recorded in [`frontend/package-lock.json`](frontend/package-lock.json) and [`uv.lock`](uv.lock). Release assets include a dependency inventory and [third-party notices](THIRD_PARTY_NOTICES.md).
+
+</details>
+
+<sub>Electron · React · TypeScript · Tailwind CSS &nbsp;/&nbsp; Python · FastAPI · Astroalign · Photutils · OpenCV · rawpy · PyOpenCL · FFmpeg · MCP</sub>
 
 ## Explore the documentation
 
@@ -189,10 +224,12 @@ The DMG is written to `release/`. See [release engineering](docs/releases.md) fo
 | [Hardware & performance](docs/hardware-processing.md) | CPU workers, OpenCL support, and measured performance. |
 | [MCP server](docs/mcp-server.md) · [CLI](docs/cli-guide.md) | Automation, settings, previews, and processing commands. |
 
-Found a problem? [Open an issue](https://github.com/manyakaistha/PullStar/issues) with your PullStar version, operating system, input format, and steps to reproduce. For security concerns, follow [SECURITY.md](SECURITY.md). Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change.
+**Found a problem?** [Open an issue](https://github.com/manyakaistha/PullStar/issues) with your PullStar version, operating system, input format, and steps to reproduce. For security concerns, follow [SECURITY.md](SECURITY.md). Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change.
 
 ## Ownership & licensing
 
 The original PullStar code and artwork are **copyright © 2026 Manya Kaistha, all rights reserved**. This repository is public for inspection; no open-source license is granted. See [LICENSE](LICENSE).
 
-Bundled dependencies retain their own licenses. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [COPYING](COPYING) describe the applicable third-party terms.
+Bundled dependencies retain their own licenses. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [COPYING](COPYING) describe the applicable third-party terms. README artwork is set in Instrument Serif and JetBrains Mono (SIL Open Font License; see [`scripts/readme_art/fonts`](scripts/readme_art/fonts)).
+
+<a href="https://github.com/manyakaistha/PullStar/releases/latest"><picture><source media="(prefers-reduced-motion: reduce)" srcset="docs/images/readme/footer-still.svg" /><img src="docs/images/readme/footer-motion.svg" width="100%" alt="Clear skies. Download PullStar for macOS 14 or later on Apple Silicon." /></picture></a>
