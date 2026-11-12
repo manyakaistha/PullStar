@@ -108,7 +108,7 @@ Download the package that suits your distribution from the **[latest release ↗
 | `PullStar-<version>-linux-x64.tar.gz` | Manual install | Extract it and launch the `PullStar` executable |
 
 > [!NOTE]
-> The Linux packages are new. They are built for **x86-64** on **Ubuntu 20.04** (glibc 2.31) so they can run on older distributions, but they have only been smoke-tested on that build environment so far. The AppImage needs FUSE 2 on some distributions (`libfuse2`); if it will not start, run it with `--appimage-extract-and-run`. The `.rpm` is **unsigned**, so your package manager may ask you to skip the signature check. Please [open an issue](https://github.com/manyakaistha/PullStar/issues) if PullStar does not run on your distribution.
+> The Linux packages are new. They are built for **x86-64** on **Ubuntu 20.04** (glibc 2.31) so they can run on older distributions. Each package was install-tested in clean containers using only its declared dependencies (see the compatibility details below); it has not yet been tested on real desktops. The AppImage needs FUSE 2 on some distributions (`libfuse2`); if it will not start, run it with `--appimage-extract-and-run`. The `.rpm` is **unsigned**, so your package manager may ask you to skip the signature check (`--nogpgcheck` for `dnf`, `--allow-unsigned-rpm` for `zypper`). Please [open an issue](https://github.com/manyakaistha/PullStar/issues) if PullStar does not run on your distribution.
 
 <details>
 <summary><strong>Verify the download and check compatibility</strong></summary>
@@ -125,7 +125,13 @@ On Linux, download the package and `SHA256SUMS.txt` into the same folder, then r
 sha256sum --ignore-missing -c SHA256SUMS.txt
 ```
 
-The packaged macOS app has been tested on macOS 27.0.1. The Linux packages are x86-64 only and were smoke-tested on Ubuntu 20.04 (backend, image and video export, and a headless app launch). Intel Macs, Windows, and ARM Linux require a source installation; separate installers have not been validated.
+The packaged macOS app has been tested on macOS 27.0.1. The Linux packages are x86-64 only. They were built on Ubuntu 20.04 and checked with the backend smoke test (image and video export). They were then installed in clean containers with only their declared dependencies, and the backend and a headless app launch (virtual display) were checked:
+
+- `.deb`: Ubuntu 20.04, 22.04 and 24.04; Debian 11, 12 and 13 (Debian 11 needs its archive repositories now that it is end-of-life).
+- `.rpm`: Fedora 45 and 46, AlmaLinux 8 and 9, Rocky Linux 9, openSUSE Leap and Tumbleweed. On Rocky/RHEL, remove it with `dnf remove --setopt=clean_requirements_on_remove=0 PullStar` to avoid dnf trying to remove protected packages.
+- AppImage and `.tar.gz`: Arch Linux, Fedora, AlmaLinux 9, Debian 12 and Ubuntu 20.04.
+
+These tests do not cover interactive use on a real desktop, Wayland/X11 specifics, or GPU/OpenCL acceleration. Intel Macs, Windows, and ARM Linux require a source installation; separate installers have not been validated.
 
 Camera RAW support depends on the encoding supported by LibRaw/rawpy. An embedded DNG preview can display even when the underlying RAW pixels cannot be decoded for alignment or export. See [DNG support](docs/dng-viewing.md).
 
