@@ -260,7 +260,7 @@ def hero(motion: bool) -> str:
 {mono_text(f"PULLSTAR {VERSION} — NIGHT-SKY ALIGNMENT", 40, 52, 16, MUTED)}
 {mono_text("LOCAL · NO ACCOUNT · NO UPLOAD", W-40, 52, 16, MUTED, "end", 1.2)}
 {mono_text("POLARIS OPTIONAL · WOBBLE CORRECTED · TRAILS PRESERVED", 40, H-28, 15, MUTED, tracking=1.1)}
-{mono_text("MACOS 14+ · APPLE SILICON", W-40, H-28, 15, MUTED, "end", 1.1)}
+{mono_text("MACOS 14+ · APPLE SILICON · LINUX X86-64", W-40, H-28, 15, MUTED, "end", 1.1)}
 </g>
 {status}
 <g{cls(motion, "stamp")}>{mono_text("● ALIGNED", W-40, 84, 16, AMBER, "end")}</g>
@@ -537,7 +537,7 @@ def mcp(motion):
             + serif_text("for your agent.", 46, 228, 60, SOFT, italic())
             + mono_text("INSPECT · PREVIEW · EXPORT · JOBS", 48, 300, 14, MUTED, tracking=1.2)
             + mono_text("STDIO · SSE · STREAMABLE HTTP", 48, 328, 14, DIM, tracking=1.2)
-            + mono_text("BUNDLED IN THE MACOS APP", 48, 356, 14, DIM, tracking=1.2))
+            + mono_text("BUNDLED IN THE MACOS + LINUX APPS", 48, 356, 14, DIM, tracking=1.2))
     foot = (f'<g{cls(motion, "rw", "animation-delay:3.6s")}>'
             + mono_text("● ONE AGENT SESSION, START TO FINISH", W - 48, H - 40, 13, AMBER, "end", 1.2) + "</g>")
     body = f"""
@@ -565,12 +565,12 @@ def footer(motion):
 <path{cls(motion, "met")} pathLength="1" d="M1010 40L840 128" stroke="url(#m)" stroke-width="2" stroke-linecap="round"/>
 {serif_text("Clear skies.", 44, 148, 104, PAPER, italic())}
 {serif_text("Download PullStar and align your next night.", 48, 214, 40, SOFT)}
-{mono_text(f"MACOS 14+ · APPLE SILICON · v{VERSION}", 48, 264, 18, AMBER)}
+{mono_text(f"MACOS 14+ · APPLE SILICON · LINUX X86-64 · v{VERSION}", 48, 264, 18, AMBER)}
 {arrow(W-80, 230, 26)}
 </g>"""
     style = ("@keyframes shoot{0%{stroke-dashoffset:1;opacity:0}8%{opacity:1}20%{stroke-dashoffset:-.2;opacity:0}100%{opacity:0}}"
              ".met{stroke-dasharray:.6 1;animation:shoot 9s cubic-bezier(.3,0,.2,1) 1.2s infinite}")
-    return svg(W, H, f"Clear skies. Download PullStar {VERSION} for macOS 14 or later on Apple Silicon.", body,
+    return svg(W, H, f"Clear skies. Download PullStar {VERSION} for macOS 14 or later on Apple Silicon, or for x86-64 Linux.", body,
                style if motion else "")
 
 
